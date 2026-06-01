@@ -981,43 +981,42 @@ def create_app():
                 "attachments": attachments,
             })
 
-        # Full with cursor pagination
-        if cursor:
-            customers = query_all(
-                "SELECT * FROM customers WHERE deleted_at IS NULL AND id > ? ORDER BY id LIMIT ?",
-                (int(cursor), limit),
-            )
-        else:
-            customers = query_all(
-                "SELECT * FROM customers WHERE deleted_at IS NULL ORDER BY id LIMIT ?",
-                (limit,),
-            )
+        # Full with per-table cursor pagination
+        cursors = {}
+        for key in ("customers", "meetings", "tasks", "attachments"):
+            val = request.args.get(f"cursor_{key}", "")
+            if val:
+                cursors[key] = int(val)
 
-        meetings = query_all(
-            """SELECT * FROM meetings
-               WHERE deleted_at IS NULL ORDER BY id DESC LIMIT ?""",
-            (limit,),
-        )
-        tasks = query_all(
-            """SELECT * FROM tasks
-               WHERE deleted_at IS NULL ORDER BY id DESC LIMIT ?""",
-            (limit,),
-        )
-        attachments = query_all(
-            "SELECT * FROM attachments WHERE deleted_at IS NULL ORDER BY id DESC LIMIT ?",
-            (limit,),
-        )
+        def _fetch_page(table, id_col, order_dir, limit):
+            cursor_val = cursors.get(table)
+            if cursor_val:
+                op = ">" if order_dir == "ASC" else "<"
+                rows = query_all(
+                    f"SELECT * FROM {table} WHERE deleted_at IS NULL AND {id_col} {op} ? ORDER BY {id_col} {order_dir} LIMIT ?",
+                    (cursor_val, limit),
+                )
+            else:
+                rows = query_all(
+                    f"SELECT * FROM {table} WHERE deleted_at IS NULL ORDER BY {id_col} {order_dir} LIMIT ?",
+                    (limit,),
+                )
+            has_more = len(rows) >= limit
+            next_c = str(rows[-1][id_col]) if has_more and rows else None
+            return rows, has_more, next_c
 
-        has_more = len(customers) >= limit
-        next_cursor = str(customers[-1]["id"]) if has_more and customers else None
+        customers, cm, cc = _fetch_page("customers", "id", "ASC", limit)
+        meetings, mm, mc = _fetch_page("meetings", "id", "DESC", limit)
+        tasks, tm, tc = _fetch_page("tasks", "id", "DESC", limit)
+        attachments, am, ac = _fetch_page("attachments", "id", "DESC", limit)
 
         return jsonify({
             "customers": customers,
             "meetings": meetings,
             "tasks": tasks,
             "attachments": attachments,
-            "has_more": has_more,
-            "next_cursor": next_cursor,
+            "has_more": {"customers": cm, "meetings": mm, "tasks": tm, "attachments": am},
+            "next_cursor": {"customers": cc, "meetings": mc, "tasks": tc, "attachments": ac},
         })
 
     @app.route("/api/sync/push", methods=["POST"])
