@@ -1,0 +1,491 @@
+{% extends "base.html" %}
+{% block title %}{{ customer.name }}{% endblock %}
+{% block content %}
+<div class="container-fluid py-3">
+
+  <!-- breadcrumb -->
+  <nav aria-label="breadcrumb">
+    <ol class="breadcrumb small">
+      <li class="breadcrumb-item"><a href="{{ url_for('customers') }}">客户</a></li>
+      <li class="breadcrumb-item active">{{ customer.name }}</li>
+    </ol>
+  </nav>
+
+  <!-- Customer info card -->
+  <div class="card mb-3 shadow-sm">
+    <div class="card-body">
+      <div class="d-flex flex-wrap justify-content-between align-items-start">
+        <div>
+          <h5 class="card-title mb-1">{{ customer.name }}
+            {% if customer.type %}<span class="badge bg-secondary ms-1">{{ customer.type }}</span>{% endif %}
+          </h5>
+          <div class="text-muted small">
+            {% if customer.owner %}<span class="me-3"><i class="bi bi-person"></i> {{ customer.owner }}</span>{% endif %}
+            {% if customer.contacts %}<span class="me-3"><i class="bi bi-person-lines-fill"></i> {{ customer.contacts }}</span>{% endif %}
+            {% if customer.phone %}<span class="me-3"><i class="bi bi-telephone"></i> {{ customer.phone }}</span>{% endif %}
+            {% if customer.email %}<span class="me-3"><i class="bi bi-envelope"></i> {{ customer.email }}</span>{% endif %}
+            {% if customer.telegram %}<span class="me-3"><i class="bi bi-telegram"></i> {{ customer.telegram }}</span>{% endif %}
+            {% if customer.address %}<br><i class="bi bi-geo-alt"></i> {{ customer.address }}{% endif %}
+          </div>
+          {% if customer.notes %}
+          <div class="mt-2 small text-muted border-start border-3 ps-2">{{ customer.notes }}</div>
+          {% endif %}
+        </div>
+        <div>
+          <button class="btn btn-outline-secondary btn-sm" onclick='editCustomer({{ customer | tojson | safe }})'
+                  data-bs-toggle="modal" data-bs-target="#customerModal">
+            <i class="bi bi-pencil"></i> 编辑
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Task summary -->
+  <div class="card mb-3 border-warning shadow-sm" id="tasks">
+    <div class="card-header bg-warning bg-opacity-10 d-flex justify-content-between align-items-center">
+      <strong><i class="bi bi-check2-square"></i> 未完成待办</strong>
+      <span class="badge bg-warning text-dark">{{ pending_tasks | length }}</span>
+    </div>
+    <div class="card-body p-2">
+      {% if pending_tasks %}
+      <div class="row g-2">
+        {% for t in pending_tasks %}
+        <div class="col-md-6 col-lg-4">
+          <div class="card border-{% if t.priority == 'urgent' %}danger{% elif t.priority == 'important' %}warning{% else %}light{% endif %} h-100">
+            <div class="card-body py-2 px-3">
+              <div class="d-flex justify-content-between align-items-start">
+                <div class="flex-grow-1 me-2">
+                  <div class="fw-semibold small {% if t.status == 'completed' %}text-decoration-line-through text-muted{% endif %}">
+                    {{ t.title }}
+                  </div>
+                  <div class="text-muted" style="font-size:0.75rem">
+                    {% if t.owner %}<span class="me-2"><i class="bi bi-person"></i> {{ t.owner }}</span>{% endif %}
+                    {% if t.due_date %}
+                      {% set due = t.due_date %}
+                      {% set today = now.strftime('%Y-%m-%d') %}
+                      <span class="me-2 {% if due < today %}text-danger fw-bold{% endif %}">
+                        <i class="bi bi-calendar"></i> {{ due }}
+                      </span>
+                    {% endif %}
+                    <span class="badge bg-{{ {'urgent':'danger','important':'warning','normal':'secondary'}.get(t.priority, 'secondary') }}">
+                      {{ {'urgent':'紧急','important':'重要','normal':'普通'}.get(t.priority, t.priority) }}
+                    </span>
+                  </div>
+                  {% if t.meeting_title %}
+                  <div class="text-muted mt-1" style="font-size:0.7rem">📋 {{ t.meeting_title }}</div>
+                  {% endif %}
+                </div>
+                <div class="btn-group-vertical btn-group-sm">
+                  {% if t.status == 'pending' %}
+                  <button class="btn btn-outline-info btn-sm" title="开始"
+                    onclick="quickStatus({{ t.id }}, 'in_progress')"><i class="bi bi-play"></i></button>
+                  {% endif %}
+                  {% if t.status in ('pending','in_progress') %}
+                  <button class="btn btn-outline-success btn-sm" title="完成"
+                    onclick="quickStatus({{ t.id }}, 'completed')"><i class="bi bi-check"></i></button>
+                  {% endif %}
+                  <button class="btn btn-outline-danger btn-sm" title="取消"
+                    onclick="quickStatus({{ t.id }}, 'cancelled')"><i class="bi bi-x"></i></button>
+                  <button class="btn btn-outline-secondary btn-sm" title="编辑"
+                    onclick='editTask({{ t | tojson | safe }})' data-bs-toggle="modal" data-bs-target="#taskModal">
+                    <i class="bi bi-pencil"></i>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+      {% else %}
+      <p class="text-muted text-center py-2 mb-0">暂无未完成待办</p>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- meeting timeline header -->
+  <div class="d-flex justify-content-between align-items-center mb-2">
+    <h6 class="mb-0"><i class="bi bi-journal-text"></i> 会议纪要</h6>
+    <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#meetingModal" onclick="clearMeetingForm()">
+      <i class="bi bi-plus-lg"></i> 新增会议
+    </button>
+  </div>
+
+  <!-- Meeting timeline -->
+  {% if meetings %}
+  {% for m in meetings %}
+  <div class="card mb-3 shadow-sm">
+    <div class="card-header d-flex flex-wrap justify-content-between align-items-center py-2">
+      <div>
+        <span class="fw-semibold">{{ m.meeting_date }}</span>
+        <span class="ms-2">{{ m.title or '无标题' }}</span>
+      </div>
+      <div class="btn-group btn-group-sm">
+        <button class="btn btn-outline-secondary btn-sm" onclick='editMeeting({{ m | tojson | safe }})'
+                data-bs-toggle="modal" data-bs-target="#meetingModal">
+          <i class="bi bi-pencil"></i>
+        </button>
+        <button class="btn btn-outline-primary btn-sm" onclick='addTaskForMeeting({{ m.id }})'
+                data-bs-toggle="modal" data-bs-target="#taskModal">
+          <i class="bi bi-plus-lg"></i> 待办
+        </button>
+        <!-- Attachment upload -->
+        <button class="btn btn-outline-info btn-sm" onclick='uploadForMeeting({{ m.id }})'
+                data-bs-toggle="modal" data-bs-target="#uploadModal">
+          <i class="bi bi-paperclip"></i>
+        </button>
+        <form method="POST" action="{{ url_for('meeting_delete', mid=m.id) }}" class="d-inline"
+              onsubmit="return confirm('确认删除此会议纪要？')">
+          <button class="btn btn-outline-danger btn-sm"><i class="bi bi-trash"></i></button>
+        </form>
+      </div>
+    </div>
+    <div class="card-body py-2">
+      {% if m.participants %}
+      <p class="small text-muted mb-1"><i class="bi bi-people"></i> {{ m.participants }}</p>
+      {% endif %}
+      {% if m.content %}
+      <div class="small" style="white-space:pre-wrap">{{ m.content }}</div>
+      {% endif %}
+
+      <!-- Attachments for this meeting -->
+      {% set mats = attachments | selectattr('meeting_id', 'equalto', m.id) | list %}
+      {% if mats %}
+      <div class="mt-2 border-top pt-2">
+        <small class="text-muted"><i class="bi bi-paperclip"></i> 附件 ({{ mats|length }}):</small>
+        <div class="d-flex flex-wrap gap-1 mt-1">
+          {% for att in mats %}
+          <a href="{{ url_for('attachment_download', aid=att.id) }}" target="_blank"
+             class="badge bg-light text-dark text-decoration-none border">
+            {% if att.mime_type and att.mime_type.startswith('image/') %}
+            <i class="bi bi-image"></i>
+            {% else %}
+            <i class="bi bi-file-earmark"></i>
+            {% endif %}
+            {{ att.filename }}
+          </a>
+          {% endfor %}
+        </div>
+      </div>
+      {% endif %}
+
+      <!-- Tasks for this meeting -->
+      {% set mtasks = all_tasks | selectattr('meeting_id', 'equalto', m.id) | list %}
+      {% if mtasks %}
+      <div class="mt-2 border-top pt-2">
+        <small class="text-muted"><i class="bi bi-check2-square"></i> 相关待办 ({{ mtasks|length }}):</small>
+        {% for t in mtasks %}
+        <div class="d-flex align-items-center py-1 border-bottom {% if t.status == 'completed' %}text-decoration-line-through text-muted{% endif %}">
+          <span class="badge bg-{{ {'urgent':'danger','important':'warning','normal':'secondary'}.get(t.priority, 'secondary') }} me-2" style="font-size:0.6rem">
+            {{ {'urgent':'急','important':'重','normal':'普'}.get(t.priority, t.priority) }}
+          </span>
+          <span class="small flex-grow-1">{{ t.title }}</span>
+          {% if t.owner %}<small class="text-muted me-2">{{ t.owner }}</small>{% endif %}
+          {% if t.due_date %}<small class="me-2">{{ t.due_date }}</small>{% endif %}
+          <span class="badge bg-{{ {'pending':'secondary','in_progress':'info','completed':'success','cancelled':'dark'}.get(t.status) }}">
+            {{ {'pending':'待办','in_progress':'进行','completed':'完成','cancelled':'取消'}.get(t.status) }}
+          </span>
+          <div class="btn-group btn-group-sm ms-1">
+            {% if t.status == 'pending' %}
+            <button class="btn btn-outline-info btn-sm py-0 px-1" title="开始"
+              onclick="quickStatus({{ t.id }}, 'in_progress')"><i class="bi bi-play" style="font-size:0.7rem"></i></button>
+            {% endif %}
+            {% if t.status in ('pending','in_progress') %}
+            <button class="btn btn-outline-success btn-sm py-0 px-1" title="完成"
+              onclick="quickStatus({{ t.id }}, 'completed')"><i class="bi bi-check" style="font-size:0.7rem"></i></button>
+            {% endif %}
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+      {% endif %}
+    </div>
+  </div>
+  {% endfor %}
+  {% else %}
+  <div class="text-center py-4 text-muted">
+    <i class="bi bi-journal-x display-4 d-block"></i>
+    <p>暂无会议纪要</p>
+  </div>
+  {% endif %}
+</div>
+
+<!-- Customer Edit Modal (same as in customers.html) -->
+<div class="modal fade" id="customerModal" tabindex="-1">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <form method="POST" action="{{ url_for('customer_edit', cid=customer.id) }}">
+        <div class="modal-header">
+          <h5 class="modal-title">编辑客户</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <input type="hidden" name="id" value="{{ customer.id }}">
+          <div class="row g-2">
+            <div class="col-md-6">
+              <label class="form-label">客户名称 <span class="text-danger">*</span></label>
+              <input type="text" class="form-control" name="name" id="custName" required>
+            </div>
+            <div class="col-md-3">
+              <label class="form-label">类型</label>
+              <select class="form-select" name="type" id="custType">
+                <option value="">--</option>
+                <option value="个人">个人</option>
+                <option value="企业">企业</option>
+                <option value="政府">政府</option>
+                <option value="其他">其他</option>
+              </select>
+            </div>
+            <div class="col-md-3">
+              <label class="form-label">负责人</label>
+              <input type="text" class="form-control" name="owner" id="custOwner">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">联系人</label>
+              <input type="text" class="form-control" name="contacts" id="custContacts">
+            </div>
+            <div class="col-md-3">
+              <label class="form-label">电话</label>
+              <input type="text" class="form-control" name="phone" id="custPhone">
+            </div>
+            <div class="col-md-3">
+              <label class="form-label">邮箱</label>
+              <input type="email" class="form-control" name="email" id="custEmail">
+            </div>
+            <div class="col-md-3">
+              <label class="form-label">Telegram</label>
+              <input type="text" class="form-control" name="telegram" id="custTelegram">
+            </div>
+            <div class="col-md-9">
+              <label class="form-label">地址</label>
+              <input type="text" class="form-control" name="address" id="custAddress">
+            </div>
+            <div class="col-12">
+              <label class="form-label">备注</label>
+              <textarea class="form-control" name="notes" id="custNotes" rows="2"></textarea>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+          <button type="submit" class="btn btn-primary">保存</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Meeting Modal -->
+<div class="modal fade" id="meetingModal" tabindex="-1">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <form method="POST" action="{{ url_for('meeting_create', cid=customer.id) }}" id="meetingForm">
+        <div class="modal-header">
+          <h5 class="modal-title" id="meetingModalTitle">新增会议纪要</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <input type="hidden" name="id" id="meetingId">
+          <div class="row g-2">
+            <div class="col-md-4">
+              <label class="form-label">日期 <span class="text-danger">*</span></label>
+              <input type="date" class="form-control" name="meeting_date" id="meetingDate" required>
+            </div>
+            <div class="col-md-8">
+              <label class="form-label">标题</label>
+              <input type="text" class="form-control" name="title" id="meetingTitle">
+            </div>
+            <div class="col-12">
+              <label class="form-label">参会人</label>
+              <input type="text" class="form-control" name="participants" id="meetingParticipants" placeholder="张三, 李四">
+            </div>
+            <div class="col-12">
+              <label class="form-label">会议内容</label>
+              <textarea class="form-control" name="content" id="meetingContent" rows="6" placeholder="会议纪要内容..."></textarea>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+          <button type="submit" class="btn btn-primary">保存</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Task Modal -->
+<div class="modal fade" id="taskModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <form method="POST" action="{{ url_for('task_create') }}" id="taskForm">
+        <div class="modal-header">
+          <h5 class="modal-title" id="taskModalTitle">新增待办</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <input type="hidden" name="id" id="taskId">
+          <input type="hidden" name="return_url" value="{{ request.path }}">
+          <input type="hidden" name="customer_id" value="{{ customer.id }}" id="taskCustomerId">
+          <input type="hidden" name="meeting_id" id="taskMeetingId">
+          <div class="mb-2">
+            <label class="form-label">内容 <span class="text-danger">*</span></label>
+            <input type="text" class="form-control" name="title" id="taskTitle" required>
+          </div>
+          <div class="row g-2">
+            <div class="col-6">
+              <label class="form-label">责任人</label>
+              <input type="text" class="form-control" name="owner" id="taskOwner">
+            </div>
+            <div class="col-6">
+              <label class="form-label">DDL</label>
+              <input type="date" class="form-control" name="due_date" id="taskDueDate">
+            </div>
+            <div class="col-6">
+              <label class="form-label">状态</label>
+              <select class="form-select" name="status" id="taskStatus">
+                <option value="pending">未完成</option>
+                <option value="in_progress">进行中</option>
+                <option value="completed">已完成</option>
+                <option value="cancelled">取消</option>
+              </select>
+            </div>
+            <div class="col-6">
+              <label class="form-label">优先级</label>
+              <select class="form-select" name="priority" id="taskPriority">
+                <option value="normal">普通</option>
+                <option value="important">重要</option>
+                <option value="urgent">紧急</option>
+              </select>
+            </div>
+            <div class="col-12">
+              <label class="form-label">备注</label>
+              <input type="text" class="form-control" name="note" id="taskNote">
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+          <button type="submit" class="btn btn-primary">保存</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Upload Modal -->
+<div class="modal fade" id="uploadModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <form method="POST" action="{{ url_for('attachment_upload') }}" enctype="multipart/form-data">
+        <div class="modal-header">
+          <h5 class="modal-title">上传附件</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <input type="hidden" name="customer_id" value="{{ customer.id }}">
+          <input type="hidden" name="meeting_id" id="uploadMeetingId">
+          <div class="mb-3">
+            <label class="form-label">选择文件</label>
+            <input type="file" class="form-control" name="file" required>
+          </div>
+          <small class="text-muted">支持图片、PDF、文档等，最大 16MB</small>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+          <button type="submit" class="btn btn-primary">上传</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<script>
+function editCustomer(c) {
+  document.getElementById('custName').value = c.name || '';
+  document.getElementById('custType').value = c.type || '';
+  document.getElementById('custOwner').value = c.owner || '';
+  document.getElementById('custContacts').value = c.contacts || '';
+  document.getElementById('custPhone').value = c.phone || '';
+  document.getElementById('custEmail').value = c.email || '';
+  document.getElementById('custTelegram').value = c.telegram || '';
+  document.getElementById('custAddress').value = c.address || '';
+  document.getElementById('custNotes').value = c.notes || '';
+}
+
+function clearMeetingForm() {
+  document.getElementById('meetingModalTitle').textContent = '新增会议纪要';
+  document.getElementById('meetingForm').action = '{{ url_for("meeting_create", cid=customer.id) }}';
+  document.getElementById('meetingId').value = '';
+  document.getElementById('meetingDate').value = new Date().toISOString().slice(0,10);
+  document.getElementById('meetingTitle').value = '';
+  document.getElementById('meetingParticipants').value = '';
+  document.getElementById('meetingContent').value = '';
+}
+
+function editMeeting(m) {
+  document.getElementById('meetingModalTitle').textContent = '编辑会议纪要';
+  document.getElementById('meetingForm').action = '{{ url_for("meeting_create", cid=customer.id) }}';
+  document.getElementById('meetingId').value = m.id;
+  document.getElementById('meetingDate').value = m.meeting_date || '';
+  document.getElementById('meetingTitle').value = m.title || '';
+  document.getElementById('meetingParticipants').value = m.participants || '';
+  document.getElementById('meetingContent').value = m.content || '';
+}
+
+function clearTaskForm() {
+  document.getElementById('taskModalTitle').textContent = '新增待办';
+  document.getElementById('taskId').value = '';
+  document.getElementById('taskTitle').value = '';
+  document.getElementById('taskOwner').value = '';
+  document.getElementById('taskDueDate').value = '';
+  document.getElementById('taskStatus').value = 'pending';
+  document.getElementById('taskPriority').value = 'normal';
+  document.getElementById('taskNote').value = '';
+  document.getElementById('taskMeetingId').value = '';
+}
+
+function addTaskForMeeting(meetingId) {
+  clearTaskForm();
+  document.getElementById('taskMeetingId').value = meetingId;
+  document.getElementById('taskModalTitle').textContent = '添加会议待办';
+}
+
+function editTask(t) {
+  document.getElementById('taskModalTitle').textContent = '编辑待办';
+  document.getElementById('taskId').value = t.id;
+  document.getElementById('taskTitle').value = t.title || '';
+  document.getElementById('taskOwner').value = t.owner || '';
+  document.getElementById('taskDueDate').value = t.due_date || '';
+  document.getElementById('taskStatus').value = t.status || 'pending';
+  document.getElementById('taskPriority').value = t.priority || 'normal';
+  document.getElementById('taskNote').value = t.note || '';
+  document.getElementById('taskMeetingId').value = t.meeting_id || '';
+}
+
+function uploadForMeeting(meetingId) {
+  document.getElementById('uploadMeetingId').value = meetingId;
+}
+
+function quickStatus(taskId, status) {
+  const form = document.createElement('form');
+  form.method = 'POST';
+  form.action = '{{ url_for("task_quick_status") }}';
+  const fields = [
+    ['id', taskId],
+    ['status', status],
+    ['return_url', window.location.pathname]
+  ];
+  fields.forEach(([name, value]) => {
+    const input = document.createElement('input');
+    input.type = 'hidden';
+    input.name = name;
+    input.value = value;
+    form.appendChild(input);
+  });
+  document.body.appendChild(form);
+  form.submit();
+}
+</script>
+{% endblock %}

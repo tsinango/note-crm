@@ -1,0 +1,159 @@
+{% extends "base.html" %}
+{% block title %}全局待办{% endblock %}
+{% block content %}
+<div class="container-fluid py-3">
+
+  <h4 class="mb-3"><i class="bi bi-check2-square"></i> 全局待办</h4>
+
+  <!-- Filters -->
+  <form method="GET" class="row g-2 mb-3" id="filterForm">
+    <div class="col-auto">
+      <select class="form-select form-select-sm" name="status" onchange="this.form.submit()">
+        <option value="pending,in_progress" {% if current_status == 'pending,in_progress' %}selected{% endif %}>⏳ 未完成+进行中</option>
+        <option value="pending" {% if current_status == 'pending' %}selected{% endif %}>未完成</option>
+        <option value="in_progress" {% if current_status == 'in_progress' %}selected{% endif %}>进行中</option>
+        <option value="completed" {% if current_status == 'completed' %}selected{% endif %}>已完成</option>
+        <option value="cancelled" {% if current_status == 'cancelled' %}selected{% endif %}>已取消</option>
+        <option value="all" {% if current_status == 'all' %}selected{% endif %}>全部</option>
+      </select>
+    </div>
+    <div class="col-auto">
+      <select class="form-select form-select-sm" name="due" onchange="this.form.submit()">
+        <option value="">📅 所有DDL</option>
+        <option value="overdue" {% if current_due == 'overdue' %}selected{% endif %}>🔴 逾期</option>
+        <option value="today" {% if current_due == 'today' %}selected{% endif %}>🟡 今天到期</option>
+        <option value="week" {% if current_due == 'week' %}selected{% endif %}>🟢 未来7天</option>
+        <option value="nodue" {% if current_due == 'nodue' %}selected{% endif %}>⚪ 无DDL</option>
+      </select>
+    </div>
+    <div class="col-auto">
+      <select class="form-select form-select-sm" name="priority" onchange="this.form.submit()">
+        <option value="">🔖 所有优先级</option>
+        <option value="urgent" {% if current_priority == 'urgent' %}selected{% endif %}>🔴 紧急</option>
+        <option value="important" {% if current_priority == 'important' %}selected{% endif %}>🟡 重要</option>
+        <option value="normal" {% if current_priority == 'normal' %}selected{% endif %}>🟢 普通</option>
+      </select>
+    </div>
+    <div class="col-auto">
+      <select class="form-select form-select-sm" name="customer_id" onchange="this.form.submit()">
+        <option value="">🏢 所有客户</option>
+        {% for c in all_customers %}
+        <option value="{{ c.id }}" {% if current_customer_id == c.id|string %}selected{% endif %}>{{ c.name }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="col-auto">
+      <input type="text" class="form-control form-control-sm" name="owner" placeholder="👤 责任人" value="{{ current_owner or '' }}" style="width:120px">
+    </div>
+    <div class="col-auto">
+      <button type="submit" class="btn btn-outline-secondary btn-sm">筛选</button>
+      <a href="{{ url_for('tasks') }}" class="btn btn-outline-secondary btn-sm">重置</a>
+    </div>
+  </form>
+
+  <!-- Task count -->
+  <p class="small text-muted">共 {{ tasks | length }} 条</p>
+
+  {% if tasks %}
+  <div class="table-responsive">
+    <table class="table table-hover align-middle">
+      <thead class="table-light">
+        <tr>
+          <th style="width:5%"></th>
+          <th style="width:35%">内容</th>
+          <th>客户</th>
+          <th>负责人</th>
+          <th>DDL</th>
+          <th>优先级</th>
+          <th>状态</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for t in tasks %}
+        {% set is_overdue = t.due_date and t.due_date < today %}
+        <tr>
+          <td>
+            {% if t.status in ('pending','in_progress') %}
+            <button class="btn btn-outline-success btn-sm py-0 px-1" title="完成"
+              onclick="quickStatus({{ t.id }}, 'completed')"><i class="bi bi-check"></i></button>
+            {% endif %}
+          </td>
+          <td>
+            <a href="{{ url_for('customer_detail', cid=t.customer_id) }}#tasks" class="text-decoration-none">
+              {{ t.title }}
+            </a>
+            {% if t.meeting_title %}
+            <br><small class="text-muted">📋 {{ t.meeting_title }}</small>
+            {% endif %}
+            {% if t.note %}
+            <br><small class="text-muted" style="font-size:0.7rem">{{ t.note }}</small>
+            {% endif %}
+          </td>
+          <td>
+            <a href="{{ url_for('customer_detail', cid=t.customer_id) }}" class="text-decoration-none small">
+              {{ t.customer_name }}
+            </a>
+          </td>
+          <td><small>{{ t.owner or '-' }}</small></td>
+          <td>
+            <small class="{% if is_overdue %}text-danger fw-bold{% endif %}">
+              {{ t.due_date or '-' }}
+            </small>
+          </td>
+          <td>
+            <span class="badge bg-{{ {'urgent':'danger','important':'warning','normal':'secondary'}.get(t.priority, 'secondary') }}">
+              {{ {'urgent':'紧急','important':'重要','normal':'普通'}.get(t.priority, t.priority) }}
+            </span>
+          </td>
+          <td>
+            <span class="badge bg-{{ {'pending':'secondary','in_progress':'info','completed':'success','cancelled':'dark'}.get(t.status) }}">
+              {{ {'pending':'待办','in_progress':'进行','completed':'完成','cancelled':'取消'}.get(t.status) }}
+            </span>
+            <div class="btn-group btn-group-sm ms-1">
+              {% if t.status == 'pending' %}
+              <button class="btn btn-outline-info btn-sm py-0 px-1" title="开始"
+                onclick="quickStatus({{ t.id }}, 'in_progress')"><i class="bi bi-play" style="font-size:0.7rem"></i></button>
+              {% endif %}
+              {% if t.status in ('pending','in_progress') %}
+              <button class="btn btn-outline-success btn-sm py-0 px-1" title="完成"
+                onclick="quickStatus({{ t.id }}, 'completed')"><i class="bi bi-check" style="font-size:0.7rem"></i></button>
+              {% endif %}
+              <button class="btn btn-outline-danger btn-sm py-0 px-1" title="取消"
+                onclick="quickStatus({{ t.id }}, 'cancelled')"><i class="bi bi-x" style="font-size:0.7rem"></i></button>
+            </div>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <div class="text-center py-5 text-muted">
+    <i class="bi bi-check2-circle display-2 d-block"></i>
+    <p class="mt-3">没有符合条件的待办事项 🎉</p>
+  </div>
+  {% endif %}
+</div>
+
+<script>
+function quickStatus(taskId, status) {
+  const form = document.createElement('form');
+  form.method = 'POST';
+  form.action = '{{ url_for("task_quick_status") }}';
+  const fields = [
+    ['id', taskId],
+    ['status', status],
+    ['return_url', window.location.pathname + window.location.search]
+  ];
+  fields.forEach(([name, value]) => {
+    const input = document.createElement('input');
+    input.type = 'hidden';
+    input.name = name;
+    input.value = value;
+    form.appendChild(input);
+  });
+  document.body.appendChild(form);
+  form.submit();
+}
+</script>
+{% endblock %}

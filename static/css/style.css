@@ -1,0 +1,60 @@
+/* --- Custom styles for CRM --- */
+
+/* Compact card headers */
+.card-header {
+  font-size: 0.9rem;
+}
+
+/* Make modals scrollable on mobile */
+.modal-body {
+  max-height: 70vh;
+  overflow-y: auto;
+}
+
+/* Task cards in summary section */
+#tasks .card {
+  transition: box-shadow 0.15s;
+}
+#tasks .card:hover {
+  box-shadow: 0 0 0 2px var(--bs-warning);
+}
+
+/* Meeting timeline cards */
+.card-header .btn-group .btn {
+  --bs-btn-padding-y: 0.1rem;
+  --bs-btn-padding-x: 0.4rem;
+  font-size: 0.75rem;
+}
+
+/* Offline banner */
+#offline-banner {
+  position: sticky;
+  top: 0;
+  z-index: 1050;
+}
+
+/* Responsive tables: allow horizontal scroll */
+.table-responsive {
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Fix badge colors for task statuses */
+.badge.bg-dark { background-color: #6c757d !important; }
+
+/* Breadcrumb compact */
+.breadcrumb {
+  margin-bottom: 0.5rem;
+}
+
+/* Better mobile form controls */
+@media (max-width: 576px) {
+  .modal-dialog {
+    margin: 0.3rem;
+  }
+  .btn-group-sm > .btn {
+    padding: 0.15rem 0.4rem;
+  }
+  h4 {
+    font-size: 1.2rem;
+  }
+}
