@@ -2,11 +2,13 @@
 {% block title %}全局待办{% endblock %}
 {% block content %}
 <div class="container-fluid py-3">
-
-  <h4 class="mb-3"><i class="bi bi-check2-square"></i> 全局待办</h4>
+  <h4 class="mb-3"><i class="bi bi-check2-square"></i> 全局待办
+    <small class="text-muted fs-6">({{ total }} 条)</small>
+  </h4>
 
   <!-- Filters -->
   <form method="GET" class="row g-2 mb-3" id="filterForm">
+    <input type="hidden" name="page" value="1">
     <div class="col-auto">
       <select class="form-select form-select-sm" name="status" onchange="this.form.submit()">
         <option value="pending,in_progress" {% if current_status == 'pending,in_progress' %}selected{% endif %}>⏳ 未完成+进行中</option>
@@ -51,9 +53,6 @@
     </div>
   </form>
 
-  <!-- Task count -->
-  <p class="small text-muted">共 {{ tasks | length }} 条</p>
-
   {% if tasks %}
   <div class="table-responsive">
     <table class="table table-hover align-middle">
@@ -74,8 +73,13 @@
         <tr>
           <td>
             {% if t.status in ('pending','in_progress') %}
-            <button class="btn btn-outline-success btn-sm py-0 px-1" title="完成"
-              onclick="quickStatus({{ t.id }}, 'completed')"><i class="bi bi-check"></i></button>
+            <form method="POST" action="{{ url_for('task_quick_status') }}" class="d-inline quick-status-form">
+              <input type="hidden" name="_csrf_token" value="{{ session._csrf_token }}">
+              <input type="hidden" name="id" value="{{ t.id }}">
+              <input type="hidden" name="status" value="completed">
+              <input type="hidden" name="return_url" value="{{ request.full_path }}">
+              <button class="btn btn-outline-success btn-sm py-0 px-1" title="完成"><i class="bi bi-check"></i></button>
+            </form>
             {% endif %}
           </td>
           <td>
@@ -83,10 +87,7 @@
               {{ t.title }}
             </a>
             {% if t.meeting_title %}
-            <br><small class="text-muted">📋 {{ t.meeting_title }}</small>
-            {% endif %}
-            {% if t.note %}
-            <br><small class="text-muted" style="font-size:0.7rem">{{ t.note }}</small>
+            <br><small class="text-muted">📋 {{ t.meeting_title[:40] }}{% if t.meeting_title|length > 40 %}...{% endif %}</small>
             {% endif %}
           </td>
           <td>
@@ -111,15 +112,30 @@
             </span>
             <div class="btn-group btn-group-sm ms-1">
               {% if t.status == 'pending' %}
-              <button class="btn btn-outline-info btn-sm py-0 px-1" title="开始"
-                onclick="quickStatus({{ t.id }}, 'in_progress')"><i class="bi bi-play" style="font-size:0.7rem"></i></button>
+              <form method="POST" action="{{ url_for('task_quick_status') }}" class="d-inline">
+                <input type="hidden" name="_csrf_token" value="{{ session._csrf_token }}">
+                <input type="hidden" name="id" value="{{ t.id }}">
+                <input type="hidden" name="status" value="in_progress">
+                <input type="hidden" name="return_url" value="{{ request.full_path }}">
+                <button class="btn btn-outline-info btn-sm py-0 px-1" title="开始"><i class="bi bi-play" style="font-size:0.7rem"></i></button>
+              </form>
               {% endif %}
               {% if t.status in ('pending','in_progress') %}
-              <button class="btn btn-outline-success btn-sm py-0 px-1" title="完成"
-                onclick="quickStatus({{ t.id }}, 'completed')"><i class="bi bi-check" style="font-size:0.7rem"></i></button>
+              <form method="POST" action="{{ url_for('task_quick_status') }}" class="d-inline">
+                <input type="hidden" name="_csrf_token" value="{{ session._csrf_token }}">
+                <input type="hidden" name="id" value="{{ t.id }}">
+                <input type="hidden" name="status" value="completed">
+                <input type="hidden" name="return_url" value="{{ request.full_path }}">
+                <button class="btn btn-outline-success btn-sm py-0 px-1" title="完成"><i class="bi bi-check" style="font-size:0.7rem"></i></button>
+              </form>
               {% endif %}
-              <button class="btn btn-outline-danger btn-sm py-0 px-1" title="取消"
-                onclick="quickStatus({{ t.id }}, 'cancelled')"><i class="bi bi-x" style="font-size:0.7rem"></i></button>
+              <form method="POST" action="{{ url_for('task_quick_status') }}" class="d-inline">
+                <input type="hidden" name="_csrf_token" value="{{ session._csrf_token }}">
+                <input type="hidden" name="id" value="{{ t.id }}">
+                <input type="hidden" name="status" value="cancelled">
+                <input type="hidden" name="return_url" value="{{ request.full_path }}">
+                <button class="btn btn-outline-danger btn-sm py-0 px-1" title="取消"><i class="bi bi-x" style="font-size:0.7rem"></i></button>
+              </form>
             </div>
           </td>
         </tr>
@@ -127,6 +143,30 @@
       </tbody>
     </table>
   </div>
+
+  <!-- Pagination -->
+  {% if total_pages > 1 %}
+  <nav>
+    <ul class="pagination pagination-sm justify-content-center">
+      <li class="page-item {{ 'disabled' if page <= 1 }}">
+        <a class="page-link" href="{{ page_url(page-1) }}">&laquo;</a>
+      </li>
+      {% for p in page_range %}
+        {% if p == '...' %}
+        <li class="page-item disabled"><span class="page-link">...</span></li>
+        {% elif p == page %}
+        <li class="page-item active"><span class="page-link">{{ p }}</span></li>
+        {% else %}
+        <li class="page-item"><a class="page-link" href="{{ page_url(p) }}">{{ p }}</a></li>
+        {% endif %}
+      {% endfor %}
+      <li class="page-item {{ 'disabled' if page >= total_pages }}">
+        <a class="page-link" href="{{ page_url(page+1) }}">&raquo;</a>
+      </li>
+    </ul>
+  </nav>
+  {% endif %}
+
   {% else %}
   <div class="text-center py-5 text-muted">
     <i class="bi bi-check2-circle display-2 d-block"></i>
@@ -134,26 +174,4 @@
   </div>
   {% endif %}
 </div>
-
-<script>
-function quickStatus(taskId, status) {
-  const form = document.createElement('form');
-  form.method = 'POST';
-  form.action = '{{ url_for("task_quick_status") }}';
-  const fields = [
-    ['id', taskId],
-    ['status', status],
-    ['return_url', window.location.pathname + window.location.search]
-  ];
-  fields.forEach(([name, value]) => {
-    const input = document.createElement('input');
-    input.type = 'hidden';
-    input.name = name;
-    input.value = value;
-    form.appendChild(input);
-  });
-  document.body.appendChild(form);
-  form.submit();
-}
-</script>
 {% endblock %}

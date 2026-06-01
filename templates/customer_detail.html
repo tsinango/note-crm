@@ -3,7 +3,6 @@
 {% block content %}
 <div class="container-fluid py-3">
 
-  <!-- breadcrumb -->
   <nav aria-label="breadcrumb">
     <ol class="breadcrumb small">
       <li class="breadcrumb-item"><a href="{{ url_for('customers') }}">客户</a></li>
@@ -24,19 +23,15 @@
             {% if customer.contacts %}<span class="me-3"><i class="bi bi-person-lines-fill"></i> {{ customer.contacts }}</span>{% endif %}
             {% if customer.phone %}<span class="me-3"><i class="bi bi-telephone"></i> {{ customer.phone }}</span>{% endif %}
             {% if customer.email %}<span class="me-3"><i class="bi bi-envelope"></i> {{ customer.email }}</span>{% endif %}
-            {% if customer.telegram %}<span class="me-3"><i class="bi bi-telegram"></i> {{ customer.telegram }}</span>{% endif %}
-            {% if customer.address %}<br><i class="bi bi-geo-alt"></i> {{ customer.address }}{% endif %}
           </div>
           {% if customer.notes %}
           <div class="mt-2 small text-muted border-start border-3 ps-2">{{ customer.notes }}</div>
           {% endif %}
         </div>
-        <div>
-          <button class="btn btn-outline-secondary btn-sm" onclick='editCustomer({{ customer | tojson | safe }})'
-                  data-bs-toggle="modal" data-bs-target="#customerModal">
-            <i class="bi bi-pencil"></i> 编辑
-          </button>
-        </div>
+        <button class="btn btn-outline-secondary btn-sm" onclick='editCustomer({{ customer | tojson | safe }})'
+                data-bs-toggle="modal" data-bs-target="#customerModal">
+          <i class="bi bi-pencil"></i> 编辑
+        </button>
       </div>
     </div>
   </div>
@@ -56,25 +51,18 @@
             <div class="card-body py-2 px-3">
               <div class="d-flex justify-content-between align-items-start">
                 <div class="flex-grow-1 me-2">
-                  <div class="fw-semibold small {% if t.status == 'completed' %}text-decoration-line-through text-muted{% endif %}">
-                    {{ t.title }}
-                  </div>
+                  <div class="fw-semibold small">{{ t.title }}</div>
                   <div class="text-muted" style="font-size:0.75rem">
                     {% if t.owner %}<span class="me-2"><i class="bi bi-person"></i> {{ t.owner }}</span>{% endif %}
                     {% if t.due_date %}
-                      {% set due = t.due_date %}
-                      {% set today = now.strftime('%Y-%m-%d') %}
-                      <span class="me-2 {% if due < today %}text-danger fw-bold{% endif %}">
-                        <i class="bi bi-calendar"></i> {{ due }}
-                      </span>
+                    <span class="me-2 {% if t.due_date < today_iso %}text-danger fw-bold{% endif %}">
+                      <i class="bi bi-calendar"></i> {{ t.due_date }}
+                    </span>
                     {% endif %}
                     <span class="badge bg-{{ {'urgent':'danger','important':'warning','normal':'secondary'}.get(t.priority, 'secondary') }}">
                       {{ {'urgent':'紧急','important':'重要','normal':'普通'}.get(t.priority, t.priority) }}
                     </span>
                   </div>
-                  {% if t.meeting_title %}
-                  <div class="text-muted mt-1" style="font-size:0.7rem">📋 {{ t.meeting_title }}</div>
-                  {% endif %}
                 </div>
                 <div class="btn-group-vertical btn-group-sm">
                   {% if t.status == 'pending' %}
@@ -87,10 +75,6 @@
                   {% endif %}
                   <button class="btn btn-outline-danger btn-sm" title="取消"
                     onclick="quickStatus({{ t.id }}, 'cancelled')"><i class="bi bi-x"></i></button>
-                  <button class="btn btn-outline-secondary btn-sm" title="编辑"
-                    onclick='editTask({{ t | tojson | safe }})' data-bs-toggle="modal" data-bs-target="#taskModal">
-                    <i class="bi bi-pencil"></i>
-                  </button>
                 </div>
               </div>
             </div>
@@ -104,22 +88,25 @@
     </div>
   </div>
 
-  <!-- meeting timeline header -->
+  <!-- Meeting timeline header -->
   <div class="d-flex justify-content-between align-items-center mb-2">
-    <h6 class="mb-0"><i class="bi bi-journal-text"></i> 会议纪要</h6>
-    <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#meetingModal" onclick="clearMeetingForm()">
+    <h6 class="mb-0"><i class="bi bi-journal-text"></i> 会议纪要
+      <small class="text-muted">({{ total_meetings }} 条{% if total_meetings > meetings|length %}, 显示最近 {{ meetings|length }} 条{% endif %})</small>
+    </h6>
+    <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#meetingModal"
+            onclick="clearMeetingForm()">
       <i class="bi bi-plus-lg"></i> 新增会议
     </button>
   </div>
 
   <!-- Meeting timeline -->
-  {% if meetings %}
   {% for m in meetings %}
   <div class="card mb-3 shadow-sm">
     <div class="card-header d-flex flex-wrap justify-content-between align-items-center py-2">
       <div>
         <span class="fw-semibold">{{ m.meeting_date }}</span>
         <span class="ms-2">{{ m.title or '无标题' }}</span>
+        {% if m.participants %}<small class="text-muted ms-2">{{ m.participants }}</small>{% endif %}
       </div>
       <div class="btn-group btn-group-sm">
         <button class="btn btn-outline-secondary btn-sm" onclick='editMeeting({{ m | tojson | safe }})'
@@ -130,72 +117,50 @@
                 data-bs-toggle="modal" data-bs-target="#taskModal">
           <i class="bi bi-plus-lg"></i> 待办
         </button>
-        <!-- Attachment upload -->
-        <button class="btn btn-outline-info btn-sm" onclick='uploadForMeeting({{ m.id }})'
-                data-bs-toggle="modal" data-bs-target="#uploadModal">
-          <i class="bi bi-paperclip"></i>
-        </button>
         <form method="POST" action="{{ url_for('meeting_delete', mid=m.id) }}" class="d-inline"
-              onsubmit="return confirm('确认删除此会议纪要？')">
+              onsubmit="return confirm('确认删除？')">
+          <input type="hidden" name="_csrf_token" value="{{ session._csrf_token }}">
           <button class="btn btn-outline-danger btn-sm"><i class="bi bi-trash"></i></button>
         </form>
       </div>
     </div>
     <div class="card-body py-2">
-      {% if m.participants %}
-      <p class="small text-muted mb-1"><i class="bi bi-people"></i> {{ m.participants }}</p>
-      {% endif %}
       {% if m.content %}
       <div class="small" style="white-space:pre-wrap">{{ m.content }}</div>
       {% endif %}
 
-      <!-- Attachments for this meeting -->
+      <!-- Attachments -->
       {% set mats = attachments | selectattr('meeting_id', 'equalto', m.id) | list %}
       {% if mats %}
       <div class="mt-2 border-top pt-2">
-        <small class="text-muted"><i class="bi bi-paperclip"></i> 附件 ({{ mats|length }}):</small>
-        <div class="d-flex flex-wrap gap-1 mt-1">
-          {% for att in mats %}
-          <a href="{{ url_for('attachment_download', aid=att.id) }}" target="_blank"
-             class="badge bg-light text-dark text-decoration-none border">
-            {% if att.mime_type and att.mime_type.startswith('image/') %}
-            <i class="bi bi-image"></i>
-            {% else %}
-            <i class="bi bi-file-earmark"></i>
-            {% endif %}
-            {{ att.filename }}
-          </a>
-          {% endfor %}
-        </div>
+        <small class="text-muted"><i class="bi bi-paperclip"></i> 附件:</small>
+        {% for att in mats %}
+        <a href="{{ url_for('attachment_download', aid=att.id) }}" target="_blank"
+           class="badge bg-light text-dark text-decoration-none border ms-1">
+          {% if att.mime_type and att.mime_type.startswith('image/') %}<i class="bi bi-image"></i>{% endif %}
+          {{ att.filename }}
+        </a>
+        {% endfor %}
       </div>
       {% endif %}
 
-      <!-- Tasks for this meeting -->
+      <!-- Tasks under this meeting -->
       {% set mtasks = all_tasks | selectattr('meeting_id', 'equalto', m.id) | list %}
       {% if mtasks %}
       <div class="mt-2 border-top pt-2">
-        <small class="text-muted"><i class="bi bi-check2-square"></i> 相关待办 ({{ mtasks|length }}):</small>
+        <small class="text-muted"><i class="bi bi-check2-square"></i> 待办 ({{ mtasks|length }}):</small>
         {% for t in mtasks %}
-        <div class="d-flex align-items-center py-1 border-bottom {% if t.status == 'completed' %}text-decoration-line-through text-muted{% endif %}">
+        <div class="d-flex align-items-center py-1 border-bottom small">
           <span class="badge bg-{{ {'urgent':'danger','important':'warning','normal':'secondary'}.get(t.priority, 'secondary') }} me-2" style="font-size:0.6rem">
             {{ {'urgent':'急','important':'重','normal':'普'}.get(t.priority, t.priority) }}
           </span>
-          <span class="small flex-grow-1">{{ t.title }}</span>
+          <span class="flex-grow-1 {% if t.status == 'completed' %}text-decoration-line-through text-muted{% endif %}">{{ t.title }}</span>
           {% if t.owner %}<small class="text-muted me-2">{{ t.owner }}</small>{% endif %}
           {% if t.due_date %}<small class="me-2">{{ t.due_date }}</small>{% endif %}
-          <span class="badge bg-{{ {'pending':'secondary','in_progress':'info','completed':'success','cancelled':'dark'}.get(t.status) }}">
-            {{ {'pending':'待办','in_progress':'进行','completed':'完成','cancelled':'取消'}.get(t.status) }}
-          </span>
-          <div class="btn-group btn-group-sm ms-1">
-            {% if t.status == 'pending' %}
-            <button class="btn btn-outline-info btn-sm py-0 px-1" title="开始"
-              onclick="quickStatus({{ t.id }}, 'in_progress')"><i class="bi bi-play" style="font-size:0.7rem"></i></button>
-            {% endif %}
-            {% if t.status in ('pending','in_progress') %}
-            <button class="btn btn-outline-success btn-sm py-0 px-1" title="完成"
-              onclick="quickStatus({{ t.id }}, 'completed')"><i class="bi bi-check" style="font-size:0.7rem"></i></button>
-            {% endif %}
-          </div>
+          {% if t.status in ('pending',) %}
+          <button class="btn btn-outline-success btn-sm py-0 px-1" title="完成"
+            onclick="quickStatus({{ t.id }}, 'completed')"><i class="bi bi-check" style="font-size:0.7rem"></i></button>
+          {% endif %}
         </div>
         {% endfor %}
       </div>
@@ -203,25 +168,38 @@
     </div>
   </div>
   {% endfor %}
-  {% else %}
+
+  {% if not meetings %}
   <div class="text-center py-4 text-muted">
     <i class="bi bi-journal-x display-4 d-block"></i>
     <p>暂无会议纪要</p>
   </div>
   {% endif %}
+
+  <!-- Load more button -->
+  {% if total_meetings > meetings|length %}
+  <div class="text-center py-2" id="loadMoreArea">
+    <button class="btn btn-outline-secondary btn-sm" id="loadMoreBtn" onclick="loadMoreMeetings()">
+      加载更多会议 ({{ meetings|length }}/{{ total_meetings }})
+    </button>
+  </div>
+  {% endif %}
 </div>
 
-<!-- Customer Edit Modal (same as in customers.html) -->
+<!-- ── Modals ── -->
+
+<!-- Customer Edit Modal -->
 <div class="modal fade" id="customerModal" tabindex="-1">
   <div class="modal-dialog modal-lg">
     <div class="modal-content">
-      <form method="POST" action="{{ url_for('customer_edit', cid=customer.id) }}">
+      <form method="POST" action="{{ url_for('customer_edit', cid=customer.id) }}" id="customerEditForm"
+            onsubmit="return handleCustomerEditSubmit(event)">
         <div class="modal-header">
           <h5 class="modal-title">编辑客户</h5>
           <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
         </div>
         <div class="modal-body">
-          <input type="hidden" name="id" value="{{ customer.id }}">
+          <input type="hidden" name="_csrf_token" value="{{ session._csrf_token }}">
           <div class="row g-2">
             <div class="col-md-6">
               <label class="form-label">客户名称 <span class="text-danger">*</span></label>
@@ -268,6 +246,9 @@
           </div>
         </div>
         <div class="modal-footer">
+          <span id="custEditOfflineBadge" class="text-warning small me-auto d-none">
+            <i class="bi bi-wifi-off"></i> 离线保存
+          </span>
           <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
           <button type="submit" class="btn btn-primary">保存</button>
         </div>
@@ -280,13 +261,16 @@
 <div class="modal fade" id="meetingModal" tabindex="-1">
   <div class="modal-dialog modal-lg">
     <div class="modal-content">
-      <form method="POST" action="{{ url_for('meeting_create', cid=customer.id) }}" id="meetingForm">
+      <form method="POST" action="{{ url_for('meeting_create', cid=customer.id) }}" id="meetingForm"
+            onsubmit="return handleMeetingSubmit(event)">
         <div class="modal-header">
           <h5 class="modal-title" id="meetingModalTitle">新增会议纪要</h5>
           <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
         </div>
         <div class="modal-body">
+          <input type="hidden" name="_csrf_token" value="{{ session._csrf_token }}">
           <input type="hidden" name="id" id="meetingId">
+          <input type="hidden" name="local_id" id="meetingLocalId">
           <div class="row g-2">
             <div class="col-md-4">
               <label class="form-label">日期 <span class="text-danger">*</span></label>
@@ -298,15 +282,18 @@
             </div>
             <div class="col-12">
               <label class="form-label">参会人</label>
-              <input type="text" class="form-control" name="participants" id="meetingParticipants" placeholder="张三, 李四">
+              <input type="text" class="form-control" name="participants" id="meetingParticipants">
             </div>
             <div class="col-12">
               <label class="form-label">会议内容</label>
-              <textarea class="form-control" name="content" id="meetingContent" rows="6" placeholder="会议纪要内容..."></textarea>
+              <textarea class="form-control" name="content" id="meetingContent" rows="6"></textarea>
             </div>
           </div>
         </div>
         <div class="modal-footer">
+          <span id="meetingOfflineBadge" class="text-warning small me-auto d-none">
+            <i class="bi bi-wifi-off"></i> 离线保存
+          </span>
           <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
           <button type="submit" class="btn btn-primary">保存</button>
         </div>
@@ -319,14 +306,16 @@
 <div class="modal fade" id="taskModal" tabindex="-1">
   <div class="modal-dialog">
     <div class="modal-content">
-      <form method="POST" action="{{ url_for('task_create') }}" id="taskForm">
+      <form method="POST" action="{{ url_for('task_create') }}" id="taskForm"
+            onsubmit="return handleTaskSubmit(event)">
         <div class="modal-header">
           <h5 class="modal-title" id="taskModalTitle">新增待办</h5>
           <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
         </div>
         <div class="modal-body">
+          <input type="hidden" name="_csrf_token" value="{{ session._csrf_token }}">
           <input type="hidden" name="id" id="taskId">
-          <input type="hidden" name="return_url" value="{{ request.path }}">
+          <input type="hidden" name="local_id" id="taskLocalId">
           <input type="hidden" name="customer_id" value="{{ customer.id }}" id="taskCustomerId">
           <input type="hidden" name="meeting_id" id="taskMeetingId">
           <div class="mb-2">
@@ -366,6 +355,9 @@
           </div>
         </div>
         <div class="modal-footer">
+          <span id="taskOfflineBadge" class="text-warning small me-auto d-none">
+            <i class="bi bi-wifi-off"></i> 离线保存
+          </span>
           <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
           <button type="submit" class="btn btn-primary">保存</button>
         </div>
@@ -374,69 +366,101 @@
   </div>
 </div>
 
-<!-- Upload Modal -->
-<div class="modal fade" id="uploadModal" tabindex="-1">
-  <div class="modal-dialog">
-    <div class="modal-content">
-      <form method="POST" action="{{ url_for('attachment_upload') }}" enctype="multipart/form-data">
-        <div class="modal-header">
-          <h5 class="modal-title">上传附件</h5>
-          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-        </div>
-        <div class="modal-body">
-          <input type="hidden" name="customer_id" value="{{ customer.id }}">
-          <input type="hidden" name="meeting_id" id="uploadMeetingId">
-          <div class="mb-3">
-            <label class="form-label">选择文件</label>
-            <input type="file" class="form-control" name="file" required>
-          </div>
-          <small class="text-muted">支持图片、PDF、文档等，最大 16MB</small>
-        </div>
-        <div class="modal-footer">
-          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
-          <button type="submit" class="btn btn-primary">上传</button>
-        </div>
-      </form>
-    </div>
-  </div>
-</div>
-
 <script>
+var MEETING_OFFSET = {{ meetings | length }};
+var CUSTOMER_ID = {{ customer.id }};
+
+// ── Customer Edit ──
 function editCustomer(c) {
-  document.getElementById('custName').value = c.name || '';
-  document.getElementById('custType').value = c.type || '';
-  document.getElementById('custOwner').value = c.owner || '';
-  document.getElementById('custContacts').value = c.contacts || '';
-  document.getElementById('custPhone').value = c.phone || '';
-  document.getElementById('custEmail').value = c.email || '';
-  document.getElementById('custTelegram').value = c.telegram || '';
-  document.getElementById('custAddress').value = c.address || '';
-  document.getElementById('custNotes').value = c.notes || '';
+  ['custName','custType','custOwner','custContacts','custPhone','custEmail',
+   'custTelegram','custAddress','custNotes'].forEach(function(id) {
+    document.getElementById(id).value = c[id] || '';
+  });
+  updateOfflineBadge('custEditOfflineBadge');
 }
 
+function handleCustomerEditSubmit(e) {
+  if (!navigator.onLine) {
+    e.preventDefault();
+    saveLocal('customers', {
+      local_id: '{{ customer.local_id }}',
+      id: {{ customer.id }},
+      name: document.getElementById('custName').value,
+      type: document.getElementById('custType').value,
+      owner: document.getElementById('custOwner').value,
+      contacts: document.getElementById('custContacts').value,
+      phone: document.getElementById('custPhone').value,
+      email: document.getElementById('custEmail').value,
+      telegram: document.getElementById('custTelegram').value,
+      address: document.getElementById('custAddress').value,
+      notes: document.getElementById('custNotes').value,
+      sync_status: 'pending_update',
+      updated_at: new Date().toISOString()
+    }).then(function() {
+      bootstrap.Modal.getInstance(document.getElementById('customerModal')).hide();
+      showSyncBanner('已离线保存');
+      setTimeout(function() { location.reload(); }, 500);
+    }).catch(function(err) { alert('离线保存失败: ' + err.message); });
+    return false;
+  }
+  return true;
+}
+
+// ── Meetings ──
 function clearMeetingForm() {
   document.getElementById('meetingModalTitle').textContent = '新增会议纪要';
-  document.getElementById('meetingForm').action = '{{ url_for("meeting_create", cid=customer.id) }}';
   document.getElementById('meetingId').value = '';
+  document.getElementById('meetingLocalId').value = '';
   document.getElementById('meetingDate').value = new Date().toISOString().slice(0,10);
   document.getElementById('meetingTitle').value = '';
   document.getElementById('meetingParticipants').value = '';
   document.getElementById('meetingContent').value = '';
+  updateOfflineBadge('meetingOfflineBadge');
 }
 
 function editMeeting(m) {
   document.getElementById('meetingModalTitle').textContent = '编辑会议纪要';
-  document.getElementById('meetingForm').action = '{{ url_for("meeting_create", cid=customer.id) }}';
-  document.getElementById('meetingId').value = m.id;
+  document.getElementById('meetingId').value = m.id || '';
+  document.getElementById('meetingLocalId').value = m.local_id || '';
   document.getElementById('meetingDate').value = m.meeting_date || '';
   document.getElementById('meetingTitle').value = m.title || '';
   document.getElementById('meetingParticipants').value = m.participants || '';
   document.getElementById('meetingContent').value = m.content || '';
+  updateOfflineBadge('meetingOfflineBadge');
 }
 
+function handleMeetingSubmit(e) {
+  if (!navigator.onLine) {
+    e.preventDefault();
+    var data = {
+      local_id: document.getElementById('meetingLocalId').value || (crypto.randomUUID ? crypto.randomUUID() : 'local-' + Date.now()),
+      customer_id: CUSTOMER_ID,
+      customer_local_id: '{{ customer.local_id }}',
+      meeting_date: document.getElementById('meetingDate').value,
+      title: document.getElementById('meetingTitle').value,
+      participants: document.getElementById('meetingParticipants').value,
+      content: document.getElementById('meetingContent').value,
+      updated_at: new Date().toISOString()
+    };
+    var mid = document.getElementById('meetingId').value;
+    data.sync_status = mid ? 'pending_update' : 'pending_create';
+    if (mid) data.id = parseInt(mid);
+
+    saveLocal('meetings', data).then(function() {
+      bootstrap.Modal.getInstance(document.getElementById('meetingModal')).hide();
+      showSyncBanner('已离线保存');
+      setTimeout(function() { location.reload(); }, 500);
+    }).catch(function(err) { alert('离线保存失败: ' + err.message); });
+    return false;
+  }
+  return true;
+}
+
+// ── Tasks ──
 function clearTaskForm() {
   document.getElementById('taskModalTitle').textContent = '新增待办';
   document.getElementById('taskId').value = '';
+  document.getElementById('taskLocalId').value = '';
   document.getElementById('taskTitle').value = '';
   document.getElementById('taskOwner').value = '';
   document.getElementById('taskDueDate').value = '';
@@ -444,17 +468,20 @@ function clearTaskForm() {
   document.getElementById('taskPriority').value = 'normal';
   document.getElementById('taskNote').value = '';
   document.getElementById('taskMeetingId').value = '';
+  updateOfflineBadge('taskOfflineBadge');
 }
 
 function addTaskForMeeting(meetingId) {
   clearTaskForm();
   document.getElementById('taskMeetingId').value = meetingId;
   document.getElementById('taskModalTitle').textContent = '添加会议待办';
+  updateOfflineBadge('taskOfflineBadge');
 }
 
 function editTask(t) {
   document.getElementById('taskModalTitle').textContent = '编辑待办';
-  document.getElementById('taskId').value = t.id;
+  document.getElementById('taskId').value = t.id || '';
+  document.getElementById('taskLocalId').value = t.local_id || '';
   document.getElementById('taskTitle').value = t.title || '';
   document.getElementById('taskOwner').value = t.owner || '';
   document.getElementById('taskDueDate').value = t.due_date || '';
@@ -462,30 +489,122 @@ function editTask(t) {
   document.getElementById('taskPriority').value = t.priority || 'normal';
   document.getElementById('taskNote').value = t.note || '';
   document.getElementById('taskMeetingId').value = t.meeting_id || '';
+  updateOfflineBadge('taskOfflineBadge');
 }
 
-function uploadForMeeting(meetingId) {
-  document.getElementById('uploadMeetingId').value = meetingId;
+function handleTaskSubmit(e) {
+  if (!navigator.onLine) {
+    e.preventDefault();
+    var data = {
+      local_id: document.getElementById('taskLocalId').value || (crypto.randomUUID ? crypto.randomUUID() : 'local-' + Date.now()),
+      customer_id: CUSTOMER_ID,
+      customer_local_id: '{{ customer.local_id }}',
+      meeting_id: document.getElementById('taskMeetingId').value || null,
+      title: document.getElementById('taskTitle').value,
+      owner: document.getElementById('taskOwner').value,
+      due_date: document.getElementById('taskDueDate').value,
+      status: document.getElementById('taskStatus').value,
+      priority: document.getElementById('taskPriority').value,
+      note: document.getElementById('taskNote').value,
+      updated_at: new Date().toISOString()
+    };
+    var tid = document.getElementById('taskId').value;
+    data.sync_status = tid ? 'pending_update' : 'pending_create';
+    if (tid) data.id = parseInt(tid);
+
+    saveLocal('tasks', data).then(function() {
+      bootstrap.Modal.getInstance(document.getElementById('taskModal')).hide();
+      showSyncBanner('已离线保存');
+      setTimeout(function() { location.reload(); }, 500);
+    }).catch(function(err) { alert('离线保存失败: ' + err.message); });
+    return false;
+  }
+  return true;
 }
 
+// ── Load More Meetings ──
+function loadMoreMeetings() {
+  var btn = document.getElementById('loadMoreBtn');
+  btn.disabled = true;
+  btn.textContent = '加载中...';
+
+  fetch('/api/customers/' + CUSTOMER_ID + '/meetings?limit=20&offset=' + MEETING_OFFSET, {
+    credentials: 'same-origin'
+  })
+  .then(function(r) { return r.json(); })
+  .then(function(data) {
+    if (data.meetings && data.meetings.length > 0) {
+      data.meetings.forEach(function(m) { appendMeetingCard(m, data.tasks, data.attachments); });
+      MEETING_OFFSET += data.meetings.length;
+    }
+    if (MEETING_OFFSET >= data.total) {
+      document.getElementById('loadMoreArea').remove();
+    } else {
+      btn.textContent = '加载更多会议 (' + MEETING_OFFSET + '/' + data.total + ')';
+      btn.disabled = false;
+    }
+  })
+  .catch(function(err) {
+    btn.textContent = '加载失败，点击重试';
+    btn.disabled = false;
+  });
+}
+
+function appendMeetingCard(m, allTasks, allAtts) {
+  var template = document.getElementById('meetingTemplate');
+  if (!template) return;
+  var clone = template.content.cloneNode(true);
+
+  clone.querySelector('.meeting-date').textContent = m.meeting_date;
+  clone.querySelector('.meeting-title').textContent = m.title || '无标题';
+  if (m.participants) clone.querySelector('.meeting-participants').textContent = m.participants;
+  if (m.content) clone.querySelector('.meeting-content').textContent = m.content;
+
+  // Insert before load-more area
+  var loadArea = document.getElementById('loadMoreArea');
+  loadArea.parentNode.insertBefore(clone, loadArea);
+}
+
+// ── Quick Status ──
 function quickStatus(taskId, status) {
-  const form = document.createElement('form');
+  var form = document.createElement('form');
   form.method = 'POST';
   form.action = '{{ url_for("task_quick_status") }}';
-  const fields = [
-    ['id', taskId],
-    ['status', status],
-    ['return_url', window.location.pathname]
-  ];
-  fields.forEach(([name, value]) => {
-    const input = document.createElement('input');
-    input.type = 'hidden';
-    input.name = name;
-    input.value = value;
+  ['id', taskId, 'status', status, 'return_url', window.location.pathname].reduce(function(acc, val, i) {
+    if (i % 2 === 0) { acc.push([val]); } else { acc[acc.length-1].push(val); }
+    return acc;
+  }, []).forEach(function(pair) {
+    var input = document.createElement('input');
+    input.type = 'hidden'; input.name = pair[0]; input.value = pair[1];
     form.appendChild(input);
   });
+  var csrf = document.createElement('input');
+  csrf.type = 'hidden'; csrf.name = '_csrf_token';
+  csrf.value = document.querySelector('meta[name="csrf-token"]').content;
+  form.appendChild(csrf);
   document.body.appendChild(form);
   form.submit();
 }
+
+function updateOfflineBadge(id) {
+  var badge = document.getElementById(id);
+  if (badge) {
+    badge.classList.toggle('d-none', navigator.onLine);
+  }
+}
 </script>
+
+<!-- Hidden template for loaded meetings -->
+<template id="meetingTemplate">
+  <div class="card mb-3 shadow-sm">
+    <div class="card-header py-2">
+      <span class="fw-semibold meeting-date"></span>
+      <span class="ms-2 meeting-title"></span>
+      <small class="text-muted ms-2 meeting-participants"></small>
+    </div>
+    <div class="card-body py-2">
+      <div class="small meeting-content" style="white-space:pre-wrap"></div>
+    </div>
+  </div>
+</template>
 {% endblock %}
