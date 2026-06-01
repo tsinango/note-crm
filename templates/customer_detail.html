@@ -145,7 +145,7 @@
       {% endif %}
 
       <!-- Tasks under this meeting -->
-      {% set mtasks = all_tasks | selectattr('meeting_id', 'equalto', m.id) | list %}
+      {% set mtasks = meeting_tasks.get(m.id, []) %}
       {% if mtasks %}
       <div class="mt-2 border-top pt-2">
         <small class="text-muted"><i class="bi bi-check2-square"></i> 待办 ({{ mtasks|length }}):</small>

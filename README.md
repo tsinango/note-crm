@@ -40,6 +40,10 @@ gunicorn wsgi:app -b 0.0.0.0:8000 -w 2
 
 ## 生成测试数据
 
+> ⚠️ **仅限本地开发测试，严禁用于生产环境。**
+> `seed_test_data.py` 会创建 `admin/admin` 默认账号、生成随机假数据。
+> 生产环境请通过 `ADMIN_USERNAME` / `ADMIN_PASSWORD` 环境变量创建管理员。
+
 ```bash
 python3 seed_test_data.py --customers 1000 --meetings 10000 --tasks 30000
 ```

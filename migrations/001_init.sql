@@ -85,10 +85,20 @@ CREATE TABLE IF NOT EXISTS attachments (
 
 CREATE INDEX IF NOT EXISTS idx_meetings_customer ON meetings(customer_id, meeting_date DESC);
 CREATE INDEX IF NOT EXISTS idx_meetings_deleted ON meetings(deleted_at);
+
 CREATE INDEX IF NOT EXISTS idx_tasks_customer ON tasks(customer_id, status);
 CREATE INDEX IF NOT EXISTS idx_tasks_meeting ON tasks(meeting_id);
 CREATE INDEX IF NOT EXISTS idx_tasks_status ON tasks(status);
 CREATE INDEX IF NOT EXISTS idx_tasks_due ON tasks(due_date);
 CREATE INDEX IF NOT EXISTS idx_tasks_owner ON tasks(owner);
 CREATE INDEX IF NOT EXISTS idx_tasks_deleted ON tasks(deleted_at);
+
+-- Composite indexes for filtered queries
+CREATE INDEX IF NOT EXISTS idx_tasks_status_due ON tasks(status, due_date);
+CREATE INDEX IF NOT EXISTS idx_tasks_owner_status_due ON tasks(owner, status, due_date);
+CREATE INDEX IF NOT EXISTS idx_tasks_customer_status_due ON tasks(customer_id, status, due_date);
+
 CREATE INDEX IF NOT EXISTS idx_customers_deleted ON customers(deleted_at);
+CREATE INDEX IF NOT EXISTS idx_customers_name ON customers(name);
+CREATE INDEX IF NOT EXISTS idx_customers_owner ON customers(owner);
+CREATE INDEX IF NOT EXISTS idx_customers_updated_at ON customers(updated_at);

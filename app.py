@@ -981,14 +981,21 @@ def create_app():
     def sync_pull():
         since = request.args.get("since", "1970-01-01 00:00:00")
         limit = min(1000, int(request.args.get("limit", 500)))
-        cursor = request.args.get("cursor", "")
+
+        # Per-table cursors: customers=<id>, meetings=<id>, ...
+        cursors = {}
+        for key in ("customers", "meetings", "tasks", "attachments"):
+            val = request.args.get(f"cursor_{key}", "")
+            if val:
+                cursors[key] = int(val)
 
         def _pull_table(table, id_col="id"):
-            cond = f"updated_at > ?"
+            cursor_val = cursors.get(table)
+            cond = "updated_at > ?"
             params = [since]
-            if cursor:
+            if cursor_val:
                 cond += f" AND {id_col} > ?"
-                params.append(int(cursor))
+                params.append(cursor_val)
             rows = query_all(
                 f"SELECT * FROM {table} WHERE {cond} ORDER BY {id_col} LIMIT ?",
                 tuple(params) + (limit,),
@@ -1008,8 +1015,8 @@ def create_app():
             "tasks": tasks,
             "attachments": attachments,
             "server_time": now_utc(),
-            "has_more": cm or mm or tm or am,
-            "next_cursor": cc or mc or tc or ac,
+            "has_more": {"customers": cm, "meetings": mm, "tasks": tm, "attachments": am},
+            "next_cursor": {"customers": cc, "meetings": mc, "tasks": tc, "attachments": ac},
         })
 
     # ── Sync helpers ────────────────────────────────────────────

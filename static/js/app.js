@@ -225,10 +225,10 @@
         record.sync_status = 'synced';
 
         // Apply id mapping from server
-        var mappingList = serverResult[storeName] || [];
-        for (var i = 0; i < mappingList.length; i++) {
-          if (mappingList[i].local_id === localId && mappingList[i].id) {
-            record.id = mappingList[i].id;
+        var idMap = (serverResult.id_map && serverResult.id_map[storeName]) || [];
+        for (var i = 0; i < idMap.length; i++) {
+          if (idMap[i].local_id === localId && idMap[i].id) {
+            record.id = idMap[i].id;
             break;
           }
         }
