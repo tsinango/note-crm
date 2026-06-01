@@ -105,8 +105,7 @@
     <div class="card-header d-flex flex-wrap justify-content-between align-items-center py-2">
       <div>
         <span class="fw-semibold">{{ m.meeting_date }}</span>
-        <span class="ms-2">{{ m.title or '无标题' }}</span>
-        {% if m.participants %}<small class="text-muted ms-2">{{ m.participants }}</small>{% endif %}
+        {% if m.participants %}<small class="text-muted ms-2"><i class="bi bi-people"></i> {{ m.participants }}</small>{% endif %}
       </div>
       <div class="btn-group btn-group-sm">
         <button class="btn btn-outline-secondary btn-sm" onclick='editMeeting({{ m | tojson | safe }})'
@@ -277,10 +276,6 @@
               <input type="date" class="form-control" name="meeting_date" id="meetingDate" required>
             </div>
             <div class="col-md-8">
-              <label class="form-label">标题</label>
-              <input type="text" class="form-control" name="title" id="meetingTitle">
-            </div>
-            <div class="col-12">
               <label class="form-label">参会人</label>
               <input type="text" class="form-control" name="participants" id="meetingParticipants">
             </div>
@@ -412,7 +407,6 @@ function clearMeetingForm() {
   document.getElementById('meetingId').value = '';
   document.getElementById('meetingLocalId').value = '';
   document.getElementById('meetingDate').value = new Date().toISOString().slice(0,10);
-  document.getElementById('meetingTitle').value = '';
   document.getElementById('meetingParticipants').value = '';
   document.getElementById('meetingContent').value = '';
   updateOfflineBadge('meetingOfflineBadge');
@@ -423,7 +417,6 @@ function editMeeting(m) {
   document.getElementById('meetingId').value = m.id || '';
   document.getElementById('meetingLocalId').value = m.local_id || '';
   document.getElementById('meetingDate').value = m.meeting_date || '';
-  document.getElementById('meetingTitle').value = m.title || '';
   document.getElementById('meetingParticipants').value = m.participants || '';
   document.getElementById('meetingContent').value = m.content || '';
   updateOfflineBadge('meetingOfflineBadge');
@@ -437,7 +430,6 @@ function handleMeetingSubmit(e) {
       customer_id: CUSTOMER_ID,
       customer_local_id: '{{ customer.local_id }}',
       meeting_date: document.getElementById('meetingDate').value,
-      title: document.getElementById('meetingTitle').value,
       participants: document.getElementById('meetingParticipants').value,
       content: document.getElementById('meetingContent').value,
       updated_at: new Date().toISOString()
@@ -556,7 +548,6 @@ function appendMeetingCard(m, allTasks, allAtts) {
   var clone = template.content.cloneNode(true);
 
   clone.querySelector('.meeting-date').textContent = m.meeting_date;
-  clone.querySelector('.meeting-title').textContent = m.title || '无标题';
   if (m.participants) clone.querySelector('.meeting-participants').textContent = m.participants;
   if (m.content) clone.querySelector('.meeting-content').textContent = m.content;
 
@@ -599,7 +590,6 @@ function updateOfflineBadge(id) {
   <div class="card mb-3 shadow-sm">
     <div class="card-header py-2">
       <span class="fw-semibold meeting-date"></span>
-      <span class="ms-2 meeting-title"></span>
       <small class="text-muted ms-2 meeting-participants"></small>
     </div>
     <div class="card-body py-2">

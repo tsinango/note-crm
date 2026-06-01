@@ -356,13 +356,13 @@
       var div = document.createElement('div');
       div.className = 'card mb-3 shadow-sm';
       var date = m.meeting_date || '';
-      var title = m.title || '无标题';
       var participants = m.participants || '';
       var content = m.content || '';
       div.innerHTML =
         '<div class="card-header d-flex justify-content-between align-items-center py-2">' +
-        '<div><span class="fw-semibold">' + _esc(date) + '</span> ' +
-        '<span class="ms-2">' + _esc(title) + '</span></div>' +
+        '<div><span class="fw-semibold">' + _esc(date) + '</span>' +
+        (participants ? ' <small class="text-muted ms-2"><i class="bi bi-people"></i> ' + _esc(participants) + '</small>' : '') +
+        '</div>' +
         '<div class="btn-group btn-group-sm">' +
         '<button class="btn btn-outline-secondary btn-sm" onclick="editMeetingById(' + m.id + ')">' +
         '<i class="bi bi-pencil"></i></button>' +

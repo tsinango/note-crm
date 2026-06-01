@@ -414,11 +414,11 @@ def create_app():
     @app.route("/customers/<int:cid>/meetings/new", methods=["POST"])
     @login_required
     def meeting_create(cid):
-        title = request.form.get("title", "").strip()
         meeting_date = request.form.get("meeting_date", "").strip()
-        if not title or not meeting_date:
-            flash("会议标题和日期不能为空", "danger")
+        if not meeting_date:
+            flash("会议日期不能为空", "danger")
             return redirect(url_for("customer_detail", cid=cid))
+        title = request.form.get("title", "").strip() or ""
 
         local_id = request.form.get("local_id", "") or new_local_id()
         mid = execute(
@@ -452,11 +452,11 @@ def create_app():
             flash("会议不存在", "danger")
             return redirect(url_for("customers"))
 
-        title = request.form.get("title", "").strip()
         meeting_date = request.form.get("meeting_date", "").strip()
-        if not title or not meeting_date:
-            flash("会议标题和日期不能为空", "danger")
+        if not meeting_date:
+            flash("会议日期不能为空", "danger")
             return redirect(url_for("customer_detail", cid=meeting["customer_id"]))
+        title = request.form.get("title", "").strip() or meeting.get("title", "")
 
         execute(
             """UPDATE meetings SET title=?, meeting_date=?, participants=?,
