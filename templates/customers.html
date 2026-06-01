@@ -158,6 +158,7 @@
           </div>
         </div>
         <div class="modal-footer">
+          <span id="draft-customerForm" class="small me-auto"></span>
           <span id="customerOfflineBadge" class="text-warning small me-auto d-none">
             <i class="bi bi-wifi-off"></i> 离线保存
           </span>
@@ -244,7 +245,66 @@ function handleCustomerSubmit(e) {
   return true;
 }
 
+// ── Auto-clear drafts from previous successful submits ──
+Draft.autoClearOnLoad();
+
 // Show offline badge on modal open
-document.getElementById('customerModal').addEventListener('show.bs.modal', updateOfflineBadge);
+document.getElementById('customerModal').addEventListener('show.bs.modal', function () {
+  updateOfflineBadge();
+  // Restore draft for customer create
+  var dk = Draft.key('customer', 'new', {});
+  Draft.restoreIfExists('customerForm', dk, '发现未提交的客户草稿，是否恢复？');
+});
+
+// ── Draft auto-save ──
+(function () {
+  var form = document.getElementById('customerForm');
+  if (!form) return;
+
+  function customerDraftKey() {
+    var cid = document.getElementById('custId').value;
+    if (cid) return Draft.key('customer', 'edit', { customer_id: cid });
+    return Draft.key('customer', 'new', {});
+  }
+
+  function collectData() {
+    return {
+      name: document.getElementById('custName').value,
+      type: document.getElementById('custType').value,
+      owner: document.getElementById('custOwner').value,
+      contacts: document.getElementById('custContacts').value,
+      phone: document.getElementById('custPhone').value,
+      email: document.getElementById('custEmail').value,
+      telegram: document.getElementById('custTelegram').value,
+      address: document.getElementById('custAddress').value,
+      notes: document.getElementById('custNotes').value,
+      _customer_id: document.getElementById('custId').value || '',
+    };
+  }
+
+  var timer = null;
+  function doSave() {
+    var key = customerDraftKey();
+    if (!key) return;
+    var data = collectData();
+    var ok = Draft.save(key, data);
+    Draft.indicator('draft-customerForm', ok ? 'saved' : 'error', ok ? null : '保存失败');
+  }
+
+  form.addEventListener('input', function () {
+    Draft.indicator('draft-customerForm', 'saving');
+    if (timer) clearTimeout(timer);
+    timer = setTimeout(doSave, 500);
+  });
+  form.addEventListener('change', function () {
+    Draft.indicator('draft-customerForm', 'saving');
+    if (timer) clearTimeout(timer);
+    timer = setTimeout(doSave, 500);
+  });
+  form.addEventListener('submit', function () {
+    doSave();
+    Draft.markSubmitPending(customerDraftKey());
+  });
+})();
 </script>
 {% endblock %}

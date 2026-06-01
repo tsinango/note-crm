@@ -245,6 +245,7 @@
           </div>
         </div>
         <div class="modal-footer">
+          <span id="draft-customerEditForm" class="small me-auto"></span>
           <span id="custEditOfflineBadge" class="text-warning small me-auto d-none">
             <i class="bi bi-wifi-off"></i> 离线保存
           </span>
@@ -286,6 +287,7 @@
           </div>
         </div>
         <div class="modal-footer">
+          <span id="draft-meetingForm" class="small me-auto"></span>
           <span id="meetingOfflineBadge" class="text-warning small me-auto d-none">
             <i class="bi bi-wifi-off"></i> 离线保存
           </span>
@@ -350,6 +352,7 @@
           </div>
         </div>
         <div class="modal-footer">
+          <span id="draft-taskForm" class="small me-auto"></span>
           <span id="taskOfflineBadge" class="text-warning small me-auto d-none">
             <i class="bi bi-wifi-off"></i> 离线保存
           </span>
@@ -577,12 +580,156 @@ function quickStatus(taskId, status) {
   form.submit();
 }
 
+// ── Auto-clear drafts from previous successful submits ──
+Draft.autoClearOnLoad();
+
 function updateOfflineBadge(id) {
   var badge = document.getElementById(id);
   if (badge) {
     badge.classList.toggle('d-none', navigator.onLine);
   }
 }
+
+// ── Draft auto-save initialization ──
+(function initDrafts() {
+  var cid = CUSTOMER_ID;
+
+  // ── Helper: dynamic auto-save with computed key ──
+  function bindDynamicAutosave(formId, getKeyFn, fieldIds, debounceMs) {
+    debounceMs = debounceMs || 500;
+    var form = document.getElementById(formId);
+    if (!form) return;
+    var timer = null;
+
+    function collectData() {
+      var data = {};
+      fieldIds.forEach(function (id) {
+        var el = document.getElementById(id);
+        if (el) data[el.name || id] = el.value;
+      });
+      // Also grab hidden IDs
+      ['meetingId', 'meetingLocalId', 'taskId', 'taskLocalId', 'taskMeetingId',
+       'meetingDate', 'dueDate', 'custId', 'custLocalId'].forEach(function (hid) {
+        var el = document.getElementById(hid);
+        if (el && el.name && !data[el.name]) data[el.name] = el.value;
+      });
+      data._customer_id = cid;
+      return data;
+    }
+
+    function doSave() {
+      var key = getKeyFn();
+      if (!key) return;
+      var data = collectData();
+      var ok = Draft.save(key, data);
+      var indicatorId = 'draft-' + formId;
+      Draft.indicator(indicatorId, ok ? 'saved' : 'error',
+                      ok ? null : '保存失败');
+    }
+
+    form.addEventListener('input', function () {
+      Draft.indicator('draft-' + formId, 'saving');
+      if (timer) clearTimeout(timer);
+      timer = setTimeout(doSave, debounceMs);
+    });
+    form.addEventListener('change', function () {
+      Draft.indicator('draft-' + formId, 'saving');
+      if (timer) clearTimeout(timer);
+      timer = setTimeout(doSave, debounceMs);
+    });
+    form.addEventListener('submit', function () { doSave(); });
+    form._draftSave = doSave;
+  }
+
+  // ── Meeting form draft ──
+  var meetingForm = document.getElementById('meetingForm');
+  var meetingMidEl = document.getElementById('meetingId');
+  var meetingModalEl = document.getElementById('meetingModal');
+  if (meetingForm && meetingModalEl) {
+    bindDynamicAutosave('meetingForm',
+      function () {
+        var mid = meetingMidEl ? meetingMidEl.value : '';
+        return Draft.key('meeting', mid ? 'edit' : 'new',
+                         { customer_id: cid, meeting_id: mid || undefined });
+      },
+      ['meetingDate', 'meetingParticipants', 'meetingContent']
+    );
+    // Mark draft as submitted on form submit (will clear on next page load)
+    meetingForm.addEventListener('submit', function () {
+      var dk = Draft.key('meeting',
+        meetingMidEl && meetingMidEl.value ? 'edit' : 'new',
+        { customer_id: cid, meeting_id: meetingMidEl ? meetingMidEl.value : undefined }
+      );
+      Draft.markSubmitPending(dk);
+    });
+    meetingModalEl.addEventListener('hide.bs.modal', function () {
+      if (meetingForm._draftSave) meetingForm._draftSave();
+    });
+    meetingModalEl.addEventListener('show.bs.modal', function () {
+      var mid = meetingMidEl ? meetingMidEl.value : '';
+      if (!mid) {
+        var dk = Draft.key('meeting', 'new', { customer_id: cid });
+        Draft.restoreIfExists('meetingForm', dk, '发现未提交的会议草稿，是否恢复？');
+      }
+    });
+  }
+
+  // ── Task form draft ──
+  var taskForm = document.getElementById('taskForm');
+  var taskTidEl = document.getElementById('taskId');
+  var taskMidEl = document.getElementById('taskMeetingId');
+  var taskModalEl = document.getElementById('taskModal');
+  if (taskForm && taskModalEl) {
+    bindDynamicAutosave('taskForm',
+      function () {
+        var tid = taskTidEl ? taskTidEl.value : '';
+        var mid = taskMidEl ? taskMidEl.value : '';
+        return Draft.key('task', tid ? 'edit' : 'new',
+                         { customer_id: cid, task_id: tid || undefined, meeting_id: mid || undefined });
+      },
+      ['taskTitle', 'taskOwner', 'taskDueDate', 'taskStatus', 'taskPriority', 'taskNote']
+    );
+    taskForm.addEventListener('submit', function () {
+      var tid = taskTidEl ? taskTidEl.value : '';
+      var mid = taskMidEl ? taskMidEl.value : '';
+      var dk = Draft.key('task', tid ? 'edit' : 'new',
+                         { customer_id: cid, task_id: tid || undefined, meeting_id: mid || undefined });
+      Draft.markSubmitPending(dk);
+    });
+    taskModalEl.addEventListener('hide.bs.modal', function () {
+      if (taskForm._draftSave) taskForm._draftSave();
+    });
+    taskModalEl.addEventListener('show.bs.modal', function () {
+      var tid = taskTidEl ? taskTidEl.value : '';
+      if (!tid) {
+        var mid = taskMidEl ? taskMidEl.value : '';
+        var dk = Draft.key('task', 'new', { customer_id: cid, meeting_id: mid || undefined });
+        Draft.restoreIfExists('taskForm', dk, '发现未提交的待办草稿，是否恢复？');
+      }
+    });
+  }
+
+  // ── Customer edit draft ──
+  var custForm = document.getElementById('customerEditForm');
+  var custModalEl = document.getElementById('customerModal');
+  if (custForm && custModalEl) {
+    var custDk = Draft.key('customer', 'edit', { customer_id: cid });
+    // Use Draft.bindAutosave directly since key is static
+    Draft.bindAutosave('customerEditForm', custDk,
+      ['custName','custType','custOwner','custContacts','custPhone',
+       'custEmail','custTelegram','custAddress','custNotes']);
+    custForm.addEventListener('submit', function () {
+      Draft.markSubmitPending(custDk);
+    });
+    custModalEl.addEventListener('hide.bs.modal', function () {
+      if (custForm._draftSave) custForm._draftSave();
+    });
+    custModalEl.addEventListener('show.bs.modal', function () {
+      Draft.restoreIfExists('customerEditForm', custDk, '发现未提交的客户编辑草稿，是否恢复？');
+    });
+  }
+
+})();
 </script>
 
 <!-- Hidden template for loaded meetings -->
