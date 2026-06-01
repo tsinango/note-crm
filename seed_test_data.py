@@ -29,6 +29,7 @@ LAST_NAMES = ["伟", "芳", "娜", "秀英", "敏", "静", "丽", "强", "磊", 
               "洋", "勇", "艳", "杰", "娟", "涛", "明", "超", "秀兰", "霞"]
 CITIES = ["北京", "上海", "深圳", "广州", "杭州", "成都", "武汉", "南京", "西安", "重庆"]
 INDUSTRIES = ["信息技术", "金融", "教育", "医疗", "制造", "零售", "物流", "房地产", "能源", "农业"]
+REGIONS = ["华东", "华南", "华北", "华中", "西南", "西北", "东北"]
 TYPES = ["个人", "企业", "政府", "其他"]
 PRIORITIES = ["normal", "important", "urgent"]
 STATUSES = ["pending", "pending", "pending", "in_progress", "completed", "cancelled"]
@@ -98,6 +99,7 @@ def generate(db_path, num_customers=1000, num_meetings=10000, num_tasks=30000):
             name = random_company()
             batch.append((
                 str(uuid.uuid4()), name,
+                random.choice(REGIONS),
                 random.choice(TYPES),
                 random_name(),
                 random_name(),
@@ -109,9 +111,9 @@ def generate(db_path, num_customers=1000, num_meetings=10000, num_tasks=30000):
                 random_datetime(365), now, None, "synced",
             ))
         db.executemany(
-            """INSERT INTO customers (local_id, name, type, owner, contacts, phone, email,
+            """INSERT INTO customers (local_id, name, region, type, owner, contacts, phone, email,
                telegram, address, notes, created_at, updated_at, deleted_at, sync_status)
-               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
             batch,
         )
         db.commit()

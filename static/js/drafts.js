@@ -186,34 +186,6 @@
     return restored;
   }
 
-  // ── Clear draft on successful form submit (non-AJAX) ──────
-  // Uses sessionStorage flag that survives the redirect.
-  function markSubmitPending(draftKey) {
-    try {
-      sessionStorage.setItem(PREFIX + 'submitted', draftKey);
-    } catch (e) { /* ignore */ }
-  }
-
-  function clearSubmittedDraft() {
-    try {
-      var flag = sessionStorage.getItem(PREFIX + 'submitted');
-      if (flag) {
-        deleteDraft(flag);
-        sessionStorage.removeItem(PREFIX + 'submitted');
-        return true;
-      }
-    } catch (e) { /* ignore */ }
-    return false;
-  }
-
-  // Check for pending clearance on page load
-  // Call this early in <script> on each page.
-  function autoClearOnLoad() {
-    if (clearSubmittedDraft()) {
-      // Draft was from a previous successful submit — cleared.
-    }
-  }
-
   // ── Expose API ─────────────────────────────────────────────
   w.Draft = {
     save: saveDraft,
@@ -224,8 +196,6 @@
     bindAutosave: bindAutosave,
     restoreIfExists: restoreIfExists,
     indicator: updateIndicator,
-    markSubmitPending: markSubmitPending,
-    autoClearOnLoad: autoClearOnLoad,
   };
 
 })(window);

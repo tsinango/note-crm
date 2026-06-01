@@ -205,6 +205,10 @@
               <input type="text" class="form-control" name="name" id="custName" required>
             </div>
             <div class="col-md-3">
+              <label class="form-label">区域</label>
+              <input type="text" class="form-control" name="region" id="custRegion" placeholder="例如：华东、华北">
+            </div>
+            <div class="col-md-3">
               <label class="form-label">类型</label>
               <select class="form-select" name="type" id="custType">
                 <option value="">--</option>
@@ -370,10 +374,22 @@ var CUSTOMER_ID = {{ customer.id }};
 
 // ── Customer Edit ──
 function editCustomer(c) {
-  ['custName','custType','custOwner','custContacts','custPhone','custEmail',
-   'custTelegram','custAddress','custNotes'].forEach(function(id) {
-    document.getElementById(id).value = c[id] || '';
-  });
+  var fieldMap = {
+    custName: 'name',
+    custRegion: 'region',
+    custType: 'type',
+    custOwner: 'owner',
+    custContacts: 'contacts',
+    custPhone: 'phone',
+    custEmail: 'email',
+    custTelegram: 'telegram',
+    custAddress: 'address',
+    custNotes: 'notes',
+  };
+  for (var elId in fieldMap) {
+    var el = document.getElementById(elId);
+    if (el) el.value = c[fieldMap[elId]] || '';
+  }
   updateOfflineBadge('custEditOfflineBadge');
 }
 
@@ -384,6 +400,7 @@ function handleCustomerEditSubmit(e) {
       local_id: '{{ customer.local_id }}',
       id: {{ customer.id }},
       name: document.getElementById('custName').value,
+      region: document.getElementById('custRegion').value,
       type: document.getElementById('custType').value,
       owner: document.getElementById('custOwner').value,
       contacts: document.getElementById('custContacts').value,
@@ -580,9 +597,6 @@ function quickStatus(taskId, status) {
   form.submit();
 }
 
-// ── Auto-clear drafts from previous successful submits ──
-Draft.autoClearOnLoad();
-
 function updateOfflineBadge(id) {
   var badge = document.getElementById(id);
   if (badge) {
@@ -654,14 +668,6 @@ function updateOfflineBadge(id) {
       },
       ['meetingDate', 'meetingParticipants', 'meetingContent']
     );
-    // Mark draft as submitted on form submit (will clear on next page load)
-    meetingForm.addEventListener('submit', function () {
-      var dk = Draft.key('meeting',
-        meetingMidEl && meetingMidEl.value ? 'edit' : 'new',
-        { customer_id: cid, meeting_id: meetingMidEl ? meetingMidEl.value : undefined }
-      );
-      Draft.markSubmitPending(dk);
-    });
     meetingModalEl.addEventListener('hide.bs.modal', function () {
       if (meetingForm._draftSave) meetingForm._draftSave();
     });
@@ -689,13 +695,6 @@ function updateOfflineBadge(id) {
       },
       ['taskTitle', 'taskOwner', 'taskDueDate', 'taskStatus', 'taskPriority', 'taskNote']
     );
-    taskForm.addEventListener('submit', function () {
-      var tid = taskTidEl ? taskTidEl.value : '';
-      var mid = taskMidEl ? taskMidEl.value : '';
-      var dk = Draft.key('task', tid ? 'edit' : 'new',
-                         { customer_id: cid, task_id: tid || undefined, meeting_id: mid || undefined });
-      Draft.markSubmitPending(dk);
-    });
     taskModalEl.addEventListener('hide.bs.modal', function () {
       if (taskForm._draftSave) taskForm._draftSave();
     });
@@ -716,11 +715,8 @@ function updateOfflineBadge(id) {
     var custDk = Draft.key('customer', 'edit', { customer_id: cid });
     // Use Draft.bindAutosave directly since key is static
     Draft.bindAutosave('customerEditForm', custDk,
-      ['custName','custType','custOwner','custContacts','custPhone',
+      ['custName','custRegion','custType','custOwner','custContacts','custPhone',
        'custEmail','custTelegram','custAddress','custNotes']);
-    custForm.addEventListener('submit', function () {
-      Draft.markSubmitPending(custDk);
-    });
     custModalEl.addEventListener('hide.bs.modal', function () {
       if (custForm._draftSave) custForm._draftSave();
     });

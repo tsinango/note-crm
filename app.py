@@ -138,9 +138,10 @@ def create_app():
     @login_required
     def customers():
         search = request.args.get("q", "").strip()
-        page = max(1, int(request.args.get("page", 1)))
-        page_size = max(1, min(200, int(request.args.get("page_size", 50))))
-        offset = (page - 1) * page_size
+        filter_region = request.args.get("region", "").strip()
+        filter_type = request.args.get("type", "").strip()
+        filter_owner = request.args.get("owner", "").strip()
+        filter_pending = request.args.get("pending_only", "").strip()
 
         where = "c.deleted_at IS NULL"
         params = []
@@ -150,38 +151,101 @@ def create_app():
             where += " AND (c.name LIKE ? OR c.notes LIKE ? OR c.contacts LIKE ?)"
             params.extend([like, like, like])
 
-        # Count total
-        total_row = query_one(
-            f"SELECT COUNT(*) as total FROM customers c WHERE {where}", tuple(params)
-        )
-        total = total_row["total"] if total_row else 0
+        if filter_region:
+            where += " AND c.region = ?"
+            params.append(filter_region)
 
-        # Fetch page
+        if filter_type:
+            where += " AND c.type = ?"
+            params.append(filter_type)
+
+        if filter_owner:
+            where += " AND c.owner LIKE ?"
+            params.append(f"%{filter_owner}%")
+
+        if filter_pending == "1":
+            where += " AND (SELECT COUNT(*) FROM tasks WHERE customer_id=c.id AND status IN ('pending','in_progress') AND deleted_at IS NULL) > 0"
+
+        # Single query: all customers with aggregated counts
+        today_str = now_utc()[:10]
         rows = query_all(
-            f"""SELECT c.*,
-                (SELECT MAX(meeting_date) FROM meetings
-                 WHERE customer_id=c.id AND deleted_at IS NULL) as last_meeting,
-                (SELECT COUNT(*) FROM tasks
-                 WHERE customer_id=c.id
-                   AND status IN ('pending','in_progress')
-                   AND deleted_at IS NULL) as pending_count
-            FROM customers c
-            WHERE {where}
-            ORDER BY c.updated_at DESC
-            LIMIT ? OFFSET ?""",
-            tuple(params) + (page_size, offset),
+            f"""SELECT c.id, c.name, c.region, c.type, c.owner, c.contacts, c.phone, c.email,
+                       c.local_id, c.notes,
+                       (SELECT MAX(meeting_date) FROM meetings
+                        WHERE customer_id=c.id AND deleted_at IS NULL) as last_meeting,
+                       (SELECT COUNT(*) FROM tasks
+                        WHERE customer_id=c.id
+                          AND status IN ('pending','in_progress')
+                          AND deleted_at IS NULL) as pending_count,
+                       (SELECT COUNT(*) FROM tasks
+                        WHERE customer_id=c.id
+                          AND status IN ('pending','in_progress')
+                          AND deleted_at IS NULL
+                          AND due_date < ?) as overdue_count
+                FROM customers c
+                WHERE {where}
+                ORDER BY COALESCE(NULLIF(c.region,''), '~~'),
+                         COALESCE(NULLIF(c.type,''), '~~'),
+                         c.name""",
+            tuple(params) + (today_str,) if not today_str in params else tuple(params)
         )
 
-        total_pages = max(1, (total + page_size - 1) // page_size)
+        # Build tree: region → type → customers
+        tree = {}
+        for r in rows:
+            reg = r["region"] if r["region"] else "未分区"
+            typ = r["type"] if r["type"] else "未分类"
+            tree.setdefault(reg, {}).setdefault(typ, []).append(r)
+
+        # Build aggregate counts for tree display
+        regions_data = []
+        for reg_name in sorted(tree.keys(), key=lambda x: (x == "未分区", x)):
+            types_dict = tree[reg_name]
+            types_list = []
+            reg_pending = 0
+            reg_overdue = 0
+            reg_count = 0
+            for typ_name in sorted(types_dict.keys(), key=lambda x: (x == "未分类", x)):
+                custs = types_dict[typ_name]
+                typ_pending = sum(c["pending_count"] or 0 for c in custs)
+                typ_overdue = sum(c["overdue_count"] or 0 for c in custs)
+                types_list.append({
+                    "name": typ_name,
+                    "customers": custs,
+                    "customer_count": len(custs),
+                    "pending_count": typ_pending,
+                    "overdue_count": typ_overdue,
+                })
+                reg_pending += typ_pending
+                reg_overdue += typ_overdue
+                reg_count += len(custs)
+            regions_data.append({
+                "name": reg_name,
+                "types": types_list,
+                "customer_count": reg_count,
+                "pending_count": reg_pending,
+                "overdue_count": reg_overdue,
+            })
+
+        # Get all distinct regions and types for filter dropdowns
+        all_regions = query_all(
+            "SELECT DISTINCT region FROM customers WHERE deleted_at IS NULL AND region != '' ORDER BY region"
+        )
+        all_types = query_all(
+            "SELECT DISTINCT type FROM customers WHERE deleted_at IS NULL AND type != '' ORDER BY type"
+        )
 
         return render_template(
             "customers.html",
-            customers=rows,
+            regions=regions_data,
+            total=sum(r["customer_count"] for r in regions_data),
             search=search,
-            page=page,
-            page_size=page_size,
-            total=total,
-            total_pages=total_pages,
+            filter_region=filter_region,
+            filter_type=filter_type,
+            filter_owner=filter_owner,
+            filter_pending=filter_pending,
+            all_regions=[r["region"] for r in all_regions],
+            all_types=[t["type"] for t in all_types],
         )
 
     @app.route("/customers/new", methods=["POST"])
@@ -195,12 +259,13 @@ def create_app():
         local_id = request.form.get("local_id", "") or new_local_id()
         cid = execute(
             """INSERT INTO customers
-               (local_id, name, type, owner, contacts, phone, email,
+               (local_id, name, region, type, owner, contacts, phone, email,
                 telegram, address, notes, sync_status)
-               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
             (
                 local_id,
                 name,
+                request.form.get("region", "").strip(),
                 request.form.get("type", "").strip(),
                 request.form.get("owner", "").strip(),
                 request.form.get("contacts", "").strip(),
@@ -226,13 +291,15 @@ def create_app():
             flash("客户名称不能为空", "danger")
             return redirect(url_for("customer_detail", cid=cid))
 
+        region = request.form.get("region", "").strip()
         execute(
-            """UPDATE customers SET name=?, type=?, owner=?, contacts=?,
+            """UPDATE customers SET name=?, region=?, type=?, owner=?, contacts=?,
                phone=?, email=?, telegram=?, address=?, notes=?,
                updated_at=?, sync_status='pending_update'
                WHERE id=? AND deleted_at IS NULL""",
             (
                 name,
+                region,
                 request.form.get("type", "").strip(),
                 request.form.get("owner", "").strip(),
                 request.form.get("contacts", "").strip(),

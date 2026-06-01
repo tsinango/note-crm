@@ -2,103 +2,171 @@
 {% block title %}客户列表{% endblock %}
 {% block content %}
 <div class="container-fluid py-3">
-  <div class="d-flex flex-wrap justify-content-between align-items-center mb-3">
-    <h4 class="mb-0"><i class="bi bi-people"></i> 客户列表
-      <small class="text-muted fs-6">({{ total }} 条)</small>
+
+  <!-- Header + filters -->
+  <div class="d-flex flex-wrap justify-content-between align-items-center mb-2">
+    <h4 class="mb-0"><i class="bi bi-diagram-3"></i> 客户树
+      <small class="text-muted fs-6">({{ total }} 客户)</small>
     </h4>
-    <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#customerModal"
-            onclick="clearCustomerForm()">
-      <i class="bi bi-plus-lg"></i> 新增客户
-    </button>
+    <div class="d-flex gap-1">
+      <button class="btn btn-outline-secondary btn-sm" onclick="toggleAllRegions()">
+        <i class="bi bi-arrows-expand"></i> 展开/折叠
+      </button>
+      <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#customerModal"
+              onclick="clearCustomerForm()">
+        <i class="bi bi-plus-lg"></i> 新增
+      </button>
+    </div>
   </div>
 
-  {% if customers %}
-  <div class="table-responsive">
-    <table class="table table-hover align-middle">
-      <thead class="table-light">
-        <tr>
-          <th>客户名称</th>
-          <th>类型</th>
-          <th>负责人</th>
-          <th class="d-none d-md-table-cell">最近会议</th>
-          <th>待办</th>
-          <th></th>
-        </tr>
-      </thead>
-      <tbody>
-        {% for c in customers %}
-        <tr>
-          <td>
-            <a href="{{ url_for('customer_detail', cid=c.id) }}" class="fw-semibold text-decoration-none">
-              {{ c.name }}
-            </a>
-            {% if c.type %}<br><small class="text-muted">{{ c.type }}</small>{% endif %}
-          </td>
-          <td><span class="badge bg-secondary">{{ c.type or '-' }}</span></td>
-          <td>{{ c.owner or '-' }}</td>
-          <td class="d-none d-md-table-cell">{{ c.last_meeting or '-' }}</td>
-          <td>
-            {% if c.pending_count > 0 %}
-            <a href="{{ url_for('customer_detail', cid=c.id) }}#tasks"
-               class="badge bg-warning text-dark text-decoration-none">
-              {{ c.pending_count }} 项
-            </a>
-            {% else %}
-            <span class="text-muted">0</span>
-            {% endif %}
-          </td>
-          <td>
-            <button class="btn btn-outline-secondary btn-sm"
-                    onclick='editCustomer({{ c | tojson | safe }})'
-                    data-bs-toggle="modal" data-bs-target="#customerModal">
-              <i class="bi bi-pencil"></i>
-            </button>
-            <form method="POST" action="{{ url_for('customer_delete', cid=c.id) }}" class="d-inline"
-                  onsubmit="return confirm('确认删除客户「{{ c.name }}」？')">
-              <input type="hidden" name="_csrf_token" value="{{ session._csrf_token }}">
-              <button class="btn btn-outline-danger btn-sm"><i class="bi bi-trash"></i></button>
-            </form>
-          </td>
-        </tr>
+  <!-- Filter bar -->
+  <form method="GET" class="row g-1 mb-2" id="filterForm">
+    <div class="col">
+      <input type="text" class="form-control form-control-sm" name="q" placeholder="🔍 搜索客户名/联系人/备注"
+             value="{{ search or '' }}">
+    </div>
+    <div class="col-auto">
+      <select class="form-select form-select-sm" name="region" onchange="this.form.submit()">
+        <option value="">所有区域</option>
+        {% for r in all_regions %}
+        <option value="{{ r }}" {% if filter_region == r %}selected{% endif %}>{{ r }}</option>
         {% endfor %}
-      </tbody>
-    </table>
-  </div>
+      </select>
+    </div>
+    <div class="col-auto">
+      <select class="form-select form-select-sm" name="type" onchange="this.form.submit()">
+        <option value="">所有类型</option>
+        {% for t in all_types %}
+        <option value="{{ t }}" {% if filter_type == t %}selected{% endif %}>{{ t }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="col-auto">
+      <input type="text" class="form-control form-control-sm" name="owner" placeholder="负责人"
+             value="{{ filter_owner or '' }}" style="width:100px">
+    </div>
+    <div class="col-auto">
+      <div class="form-check form-check-inline mt-1">
+        <input class="form-check-input" type="checkbox" name="pending_only" value="1"
+               id="pendingOnly" {% if filter_pending == '1' %}checked{% endif %}
+               onchange="this.form.submit()">
+        <label class="form-check-label small" for="pendingOnly">仅待办</label>
+      </div>
+    </div>
+    <div class="col-auto">
+      <button type="submit" class="btn btn-outline-secondary btn-sm"><i class="bi bi-funnel"></i></button>
+      <a href="{{ url_for('customers') }}" class="btn btn-outline-secondary btn-sm">重置</a>
+    </div>
+  </form>
 
-  <!-- Pagination -->
-  {% if total_pages > 1 %}
-  <nav>
-    <ul class="pagination pagination-sm justify-content-center">
-      <li class="page-item {{ 'disabled' if page <= 1 }}">
-        <a class="page-link" href="?{% if search %}q={{ search }}&{% endif %}page={{ page-1 }}">&laquo;</a>
-      </li>
-      {% for p in range(1, total_pages + 1) %}
-        {% if p == page %}
-        <li class="page-item active"><span class="page-link">{{ p }}</span></li>
-        {% elif p <= 3 or p > total_pages - 3 or (p >= page - 2 and p <= page + 2) %}
-        <li class="page-item">
-          <a class="page-link" href="?{% if search %}q={{ search }}&{% endif %}page={{ p }}">{{ p }}</a>
-        </li>
-        {% elif p == 4 or p == total_pages - 3 %}
-        <li class="page-item disabled"><span class="page-link">...</span></li>
-        {% endif %}
-      {% endfor %}
-      <li class="page-item {{ 'disabled' if page >= total_pages }}">
-        <a class="page-link" href="?{% if search %}q={{ search }}&{% endif %}page={{ page+1 }}">&raquo;</a>
-      </li>
-    </ul>
-  </nav>
-  {% endif %}
-
-  {% else %}
+  {% if not regions %}
   <div class="text-center py-5 text-muted">
     <i class="bi bi-inbox display-2 d-block"></i>
-    <p class="mt-3">暂无客户，点击上方按钮新增</p>
+    <p class="mt-3">{% if search %}没有匹配"{{ search }}"的客户{% else %}暂无客户，点击上方按钮新增{% endif %}</p>
+  </div>
+  {% else %}
+
+  <!-- Tree view: Region → Type → Customer -->
+  <div class="accordion" id="regionAccordion">
+    {% for region in regions %}
+    {% set reg_id = loop.index %}
+    {% set reg_expanded = region.overdue_count > 0 %}
+    <div class="accordion-item border-0 mb-1">
+      <h2 class="accordion-header" id="region-heading-{{ reg_id }}">
+        <button class="accordion-button bg-light py-2 {% if not reg_expanded %}collapsed{% endif %}"
+                type="button" data-bs-toggle="collapse"
+                data-bs-target="#region-collapse-{{ reg_id }}"
+                onclick="saveRegionToggle('{{ region.name }}', this)">
+          <span class="fw-semibold">
+            {% if region.overdue_count > 0 %}<i class="bi bi-exclamation-triangle-fill text-danger me-1"></i>{% endif %}
+            <i class="bi bi-globe2 me-1"></i>{{ region.name }}
+          </span>
+          <span class="ms-2 badge bg-secondary">{{ region.customer_count }}</span>
+          {% if region.pending_count > 0 %}
+          <span class="ms-1 badge bg-warning text-dark">{{ region.pending_count }} 待办</span>
+          {% endif %}
+          {% if region.overdue_count > 0 %}
+          <span class="ms-1 badge bg-danger">{{ region.overdue_count }} 逾期</span>
+          {% endif %}
+        </button>
+      </h2>
+      <div id="region-collapse-{{ reg_id }}"
+           class="accordion-collapse collapse {% if reg_expanded %}show{% endif %}"
+           data-bs-parent="#regionAccordion">
+        <div class="accordion-body p-2">
+          <!-- Types within this region -->
+          <div class="accordion" id="typeAccordion-{{ reg_id }}">
+            {% for type in region.types %}
+            {% set typ_id = reg_id ~ '-' ~ loop.index %}
+            {% set typ_expanded = type.overdue_count > 0 %}
+            <div class="accordion-item border-0 mb-1">
+              <h2 class="accordion-header" id="type-heading-{{ typ_id }}">
+                <button class="accordion-button py-1 ps-3 {% if not typ_expanded %}collapsed{% endif %}"
+                        type="button" data-bs-toggle="collapse"
+                        data-bs-target="#type-collapse-{{ typ_id }}"
+                        onclick="saveTypeToggle('{{ region.name }}', '{{ type.name }}', this)">
+                  <span><i class="bi bi-tag me-1"></i>{{ type.name }}</span>
+                  <span class="ms-2 badge bg-secondary">{{ type.customer_count }}</span>
+                  {% if type.pending_count > 0 %}
+                  <span class="ms-1 badge bg-warning text-dark">{{ type.pending_count }} 待办</span>
+                  {% endif %}
+                  {% if type.overdue_count > 0 %}
+                  <span class="ms-1 badge bg-danger">{{ type.overdue_count }} 逾期</span>
+                  {% endif %}
+                </button>
+              </h2>
+              <div id="type-collapse-{{ typ_id }}"
+                   class="accordion-collapse collapse {% if typ_expanded %}show{% endif %}"
+                   data-bs-parent="#typeAccordion-{{ reg_id }}">
+                <div class="accordion-body p-1">
+                  <!-- Customer list -->
+                  <div class="list-group list-group-flush">
+                    {% for c in type.customers %}
+                    <div class="list-group-item list-group-item-action py-2 px-3 d-flex flex-wrap align-items-center">
+                      <div class="flex-grow-1">
+                        <a href="{{ url_for('customer_detail', cid=c.id) }}" class="fw-semibold text-decoration-none">
+                          {{ c.name }}
+                        </a>
+                        {% if c.owner %}
+                        <small class="text-muted ms-2"><i class="bi bi-person"></i> {{ c.owner }}</small>
+                        {% endif %}
+                        {% if c.last_meeting %}
+                        <small class="text-muted ms-2"><i class="bi bi-calendar3"></i> {{ c.last_meeting }}</small>
+                        {% endif %}
+                      </div>
+                      <div class="d-flex gap-1 align-items-center">
+                        {% if c.pending_count > 0 %}
+                        <a href="{{ url_for('customer_detail', cid=c.id) }}#tasks"
+                           class="badge bg-warning text-dark text-decoration-none">
+                          {{ c.pending_count }} 待办
+                        </a>
+                        {% endif %}
+                        {% if c.overdue_count > 0 %}
+                        <span class="badge bg-danger">{{ c.overdue_count }} 逾期</span>
+                        {% endif %}
+                        <button class="btn btn-outline-secondary btn-sm ms-1 py-0 px-1"
+                                onclick="editCustomer({{ c | tojson | safe }})"
+                                data-bs-toggle="modal" data-bs-target="#customerModal">
+                          <i class="bi bi-pencil" style="font-size:0.75rem"></i>
+                        </button>
+                      </div>
+                    </div>
+                    {% endfor %}
+                  </div>
+                </div>
+              </div>
+            </div>
+            {% endfor %}
+          </div>
+        </div>
+      </div>
+    </div>
+    {% endfor %}
   </div>
   {% endif %}
 </div>
 
-<!-- Create / Edit Customer Modal -->
+<!-- Create / Edit Customer Modal (same as before, with region field) -->
 <div class="modal fade" id="customerModal" tabindex="-1">
   <div class="modal-dialog modal-lg">
     <div class="modal-content">
@@ -118,9 +186,16 @@
               <input type="text" class="form-control" name="name" id="custName" required>
             </div>
             <div class="col-md-3">
+              <label class="form-label">区域</label>
+              <input type="text" class="form-control" name="region" id="custRegion" placeholder="华东、华北">
+            </div>
+            <div class="col-md-3">
               <label class="form-label">类型</label>
               <select class="form-select" name="type" id="custType">
                 <option value="">--</option>
+                <option value="安装商">安装商</option>
+                <option value="分销商">分销商</option>
+                <option value="集成商">集成商</option>
                 <option value="个人">个人</option>
                 <option value="企业">企业</option>
                 <option value="政府">政府</option>
@@ -171,11 +246,81 @@
 </div>
 
 <script>
+// ── Tree collapse/expand persistence via localStorage ──
+function saveRegionToggle(name, btn) {
+  var key = 'crm:expanded:region:' + name;
+  var collapsed = btn.classList.contains('collapsed');
+  if (collapsed) localStorage.removeItem(key);
+  else localStorage.setItem(key, '1');
+}
+
+function saveTypeToggle(region, type, btn) {
+  var key = 'crm:expanded:type:' + region + ':' + type;
+  var collapsed = btn.classList.contains('collapsed');
+  if (collapsed) localStorage.removeItem(key);
+  else localStorage.setItem(key, '1');
+}
+
+function toggleAllRegions() {
+  var btns = document.querySelectorAll('#regionAccordion .accordion-button');
+  var anyCollapsed = false;
+  btns.forEach(function(b) { if (b.classList.contains('collapsed')) anyCollapsed = true; });
+  var expand = anyCollapsed;  // expand if any are collapsed
+  btns.forEach(function(b) {
+    var target = document.querySelector(b.getAttribute('data-bs-target'));
+    if (target) {
+      if (expand) {
+        b.classList.remove('collapsed');
+        target.classList.add('show');
+      } else {
+        b.classList.add('collapsed');
+        target.classList.remove('show');
+      }
+    }
+  });
+}
+
+// ── Restore saved toggle states on page load ──
+(function restoreToggles() {
+  document.querySelectorAll('[id^="region-heading-"]').forEach(function(h) {
+    var btn = h.querySelector('.accordion-button');
+    if (!btn) return;
+    // Extract region name from text content (after icon)
+    var text = btn.textContent.trim();
+    var key = 'crm:expanded:region:' + text;
+    if (localStorage.getItem(key)) {
+      // Ensure expanded
+      btn.classList.remove('collapsed');
+      var target = document.querySelector(btn.getAttribute('data-bs-target'));
+      if (target) target.classList.add('show');
+    }
+  });
+  document.querySelectorAll('[id^="type-heading-"]').forEach(function(h) {
+    var btn = h.querySelector('.accordion-button');
+    if (!btn) return;
+    // For type toggles, find parent region
+    var parentReg = h.closest('[id^="region-collapse-"]');
+    var regName = '';
+    if (parentReg) {
+      var regHeader = parentReg.previousElementSibling;
+      if (regHeader) regName = regHeader.textContent.trim();
+    }
+    var text = btn.textContent.trim();
+    var key = 'crm:expanded:type:' + regName + ':' + text;
+    if (localStorage.getItem(key)) {
+      btn.classList.remove('collapsed');
+      var target = document.querySelector(btn.getAttribute('data-bs-target'));
+      if (target) target.classList.add('show');
+    }
+  });
+})();
+
+// ── Customer form functions (same as before, with region) ──
 function clearCustomerForm() {
   document.getElementById('customerModalTitle').textContent = '新增客户';
   document.getElementById('custId').value = '';
   document.getElementById('custLocalId').value = '';
-  ['custName','custType','custOwner','custContacts','custPhone','custEmail',
+  ['custName','custRegion','custType','custOwner','custContacts','custPhone','custEmail',
    'custTelegram','custAddress','custNotes'].forEach(function(id) {
     document.getElementById(id).value = '';
   });
@@ -188,6 +333,7 @@ function editCustomer(c) {
   document.getElementById('custId').value = c.id || '';
   document.getElementById('custLocalId').value = c.local_id || '';
   document.getElementById('custName').value = c.name || '';
+  document.getElementById('custRegion').value = c.region || '';
   document.getElementById('custType').value = c.type || '';
   document.getElementById('custOwner').value = c.owner || '';
   document.getElementById('custContacts').value = c.contacts || '';
@@ -201,20 +347,17 @@ function editCustomer(c) {
 
 function updateOfflineBadge() {
   var badge = document.getElementById('customerOfflineBadge');
-  if (badge && !navigator.onLine) {
-    badge.classList.remove('d-none');
-  } else if (badge) {
-    badge.classList.add('d-none');
-  }
+  if (badge && !navigator.onLine) badge.classList.remove('d-none');
+  else if (badge) badge.classList.add('d-none');
 }
 
 function handleCustomerSubmit(e) {
   if (!navigator.onLine) {
     e.preventDefault();
-    var form = document.getElementById('customerForm');
     var data = {
       local_id: document.getElementById('custLocalId').value || '',
       name: document.getElementById('custName').value,
+      region: document.getElementById('custRegion').value,
       type: document.getElementById('custType').value,
       owner: document.getElementById('custOwner').value,
       contacts: document.getElementById('custContacts').value,
@@ -225,51 +368,37 @@ function handleCustomerSubmit(e) {
       notes: document.getElementById('custNotes').value,
       updated_at: new Date().toISOString()
     };
-    if (!data.local_id) {
-      data.local_id = crypto.randomUUID ? crypto.randomUUID() : 'local-' + Date.now();
-    }
+    if (!data.local_id) data.local_id = crypto.randomUUID ? crypto.randomUUID() : 'local-' + Date.now();
     var custId = document.getElementById('custId').value;
     data.sync_status = custId ? 'pending_update' : 'pending_create';
     if (custId) data.id = parseInt(custId);
-
     saveLocal('customers', data).then(function() {
       var modal = bootstrap.Modal.getInstance(document.getElementById('customerModal'));
       if (modal) modal.hide();
       showSyncBanner('已离线保存，联网后自动同步');
       setTimeout(function() { location.reload(); }, 500);
-    }).catch(function(err) {
-      alert('离线保存失败: ' + err.message);
-    });
+    }).catch(function(err) { alert('离线保存失败: ' + err.message); });
     return false;
   }
   return true;
 }
 
-// ── Auto-clear drafts from previous successful submits ──
-Draft.autoClearOnLoad();
-
-// Show offline badge on modal open
-document.getElementById('customerModal').addEventListener('show.bs.modal', function () {
-  updateOfflineBadge();
-  // Restore draft for customer create
-  var dk = Draft.key('customer', 'new', {});
-  Draft.restoreIfExists('customerForm', dk, '发现未提交的客户草稿，是否恢复？');
-});
-
 // ── Draft auto-save ──
 (function () {
   var form = document.getElementById('customerForm');
   if (!form) return;
-
   function customerDraftKey() {
     var cid = document.getElementById('custId').value;
     if (cid) return Draft.key('customer', 'edit', { customer_id: cid });
     return Draft.key('customer', 'new', {});
   }
-
-  function collectData() {
-    return {
+  var timer = null;
+  function doSave() {
+    var key = customerDraftKey();
+    if (!key) return;
+    var data = {
       name: document.getElementById('custName').value,
+      region: document.getElementById('custRegion').value,
       type: document.getElementById('custType').value,
       owner: document.getElementById('custOwner').value,
       contacts: document.getElementById('custContacts').value,
@@ -278,19 +407,10 @@ document.getElementById('customerModal').addEventListener('show.bs.modal', funct
       telegram: document.getElementById('custTelegram').value,
       address: document.getElementById('custAddress').value,
       notes: document.getElementById('custNotes').value,
-      _customer_id: document.getElementById('custId').value || '',
     };
-  }
-
-  var timer = null;
-  function doSave() {
-    var key = customerDraftKey();
-    if (!key) return;
-    var data = collectData();
     var ok = Draft.save(key, data);
     Draft.indicator('draft-customerForm', ok ? 'saved' : 'error', ok ? null : '保存失败');
   }
-
   form.addEventListener('input', function () {
     Draft.indicator('draft-customerForm', 'saving');
     if (timer) clearTimeout(timer);
@@ -301,10 +421,14 @@ document.getElementById('customerModal').addEventListener('show.bs.modal', funct
     if (timer) clearTimeout(timer);
     timer = setTimeout(doSave, 500);
   });
-  form.addEventListener('submit', function () {
-    doSave();
-    Draft.markSubmitPending(customerDraftKey());
-  });
+  form.addEventListener('submit', function () { doSave(); });
 })();
+
+// Restore draft on modal open
+document.getElementById('customerModal').addEventListener('show.bs.modal', function () {
+  updateOfflineBadge();
+  var dk = Draft.key('customer', 'new', {});
+  Draft.restoreIfExists('customerForm', dk, '发现未提交的客户草稿，是否恢复？');
+});
 </script>
 {% endblock %}

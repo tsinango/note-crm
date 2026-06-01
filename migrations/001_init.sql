@@ -12,6 +12,8 @@ CREATE TABLE IF NOT EXISTS customers (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     local_id TEXT UNIQUE,
     name TEXT NOT NULL,
+    region TEXT DEFAULT '',
+    type TEXT DEFAULT '',
     type TEXT DEFAULT '',
     owner TEXT DEFAULT '',
     contacts TEXT DEFAULT '',
@@ -102,3 +104,6 @@ CREATE INDEX IF NOT EXISTS idx_customers_deleted ON customers(deleted_at);
 CREATE INDEX IF NOT EXISTS idx_customers_name ON customers(name);
 CREATE INDEX IF NOT EXISTS idx_customers_owner ON customers(owner);
 CREATE INDEX IF NOT EXISTS idx_customers_updated_at ON customers(updated_at);
+CREATE INDEX IF NOT EXISTS idx_customers_region ON customers(region);
+CREATE INDEX IF NOT EXISTS idx_customers_type ON customers(type);
+CREATE INDEX IF NOT EXISTS idx_customers_region_type_name ON customers(region, type, name);

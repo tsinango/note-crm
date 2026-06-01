@@ -33,6 +33,25 @@ def init_db(app):
         db.executescript(f.read())
     db.commit()
     db.close()
+    # Apply any schema migrations for existing databases
+    migrate_schema(DATABASE)
+
+
+def migrate_schema(db_path):
+    """Apply ALTER TABLE migrations that don't break existing data."""
+    import sqlite3
+    try:
+        db = sqlite3.connect(db_path)
+        db.execute("PRAGMA foreign_keys=ON")
+        # Add region column if not present
+        try:
+            db.execute("ALTER TABLE customers ADD COLUMN region TEXT DEFAULT ''")
+        except sqlite3.OperationalError:
+            pass  # column already exists
+        db.commit()
+        db.close()
+    except Exception:
+        pass  # ignore migration errors on old/new databases
 
 
 def new_local_id():
