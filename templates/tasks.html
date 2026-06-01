@@ -86,9 +86,6 @@
             <a href="{{ url_for('customer_detail', cid=t.customer_id) }}#tasks" class="text-decoration-none">
               {{ t.title }}
             </a>
-            {% if t.meeting_title %}
-            <br><small class="text-muted">📋 {{ t.meeting_title[:40] }}{% if t.meeting_title|length > 40 %}...{% endif %}</small>
-            {% endif %}
           </td>
           <td>
             <a href="{{ url_for('customer_detail', cid=t.customer_id) }}" class="text-decoration-none small">

@@ -22,8 +22,8 @@
   <div class="list-group mb-3">
     {% for m in results.meetings %}
     <a href="{{ url_for('customer_detail', cid=m.customer_id) }}" class="list-group-item list-group-item-action">
-      <strong>{{ m.title or '无标题' }}</strong>
-      <small class="text-muted ms-2">{{ m.meeting_date }}</small>
+      <strong>{{ m.meeting_date }}</strong>
+      {% if m.participants %}<small class="text-muted ms-2">{{ m.participants }}</small>{% endif %}
       <span class="badge bg-primary ms-2">{{ m.customer_name }}</span>
       {% if m.participants %}<br><small class="text-muted">{{ m.participants }}</small>{% endif %}
     </a>
