@@ -6,10 +6,11 @@
   'use strict';
 
   var LS_KEY = 'notecrm:bootswatch-theme';
+  var DEFAULT_THEME = 'sketchy';
   var DEFAULT = 'default';
   var MANIFEST_URL = '/static/vendor/bootswatch/themes.json';
 
-  var currentTheme = localStorage.getItem(LS_KEY) || DEFAULT;
+  var currentTheme = localStorage.getItem(LS_KEY) || DEFAULT_THEME;
 
   // ── Apply theme CSS ──
   function applyTheme(name) {

@@ -8,7 +8,8 @@
   <link rel="manifest" href="{{ url_for('static', filename='manifest.json') }}">
   <title>{% block title %}CRM{% endblock %}</title>
   <link href="{{ url_for('static', filename='vendor/bootstrap/bootstrap.min.css') }}" rel="stylesheet">
-  <link id="bootswatch-theme-css" rel="stylesheet" href="">
+  <link id="bootswatch-theme-css" rel="stylesheet"
+        href="{{ url_for('static', filename='vendor/bootswatch/sketchy/bootstrap.min.css') }}">
   <link href="{{ url_for('static', filename='vendor/bootstrap-icons/bootstrap-icons.css') }}" rel="stylesheet">
   <link href="{{ url_for('static', filename='css/style.css') }}" rel="stylesheet">
 </head>
@@ -92,12 +93,12 @@
 
   <script src="{{ url_for('static', filename='vendor/bootstrap/bootstrap.bundle.min.js') }}"></script>
   <script src="{{ url_for('static', filename='js/drafts.js') }}"></script>
-  <script src="{{ url_for('static', filename='js/theme-switcher.js') }}"></script>
-  <script src="{{ url_for('static', filename='js/app.js') }}"></script>
   <!-- Draft auto-clear after successful submit (must load after drafts.js) -->
   {% if clear_draft %}
   <script>Draft.delete('{{ clear_draft }}');</script>
   {% endif %}
+  <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+  <script src="{{ url_for('static', filename='js/theme-switcher.js') }}"></script>
   {% block scripts %}{% endblock %}
 </body>
 </html>

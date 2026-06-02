@@ -15,6 +15,9 @@ const STATIC_ASSETS = [
   '/static/vendor/bootstrap-icons/bootstrap-icons.css',
   '/static/vendor/bootstrap-icons/fonts/bootstrap-icons.woff2',
   '/static/vendor/bootstrap/bootstrap.bundle.min.js',
+  '/static/js/theme-switcher.js',
+  '/static/vendor/bootswatch/themes.json',
+  '/static/vendor/bootswatch/sketchy/bootstrap.min.css',
 ];
 
 // Install: pre-cache static assets
