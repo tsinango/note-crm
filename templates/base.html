@@ -77,13 +77,6 @@
     {% endif %}
   {% endwith %}
 
-  <!-- Draft auto-clear after successful submit -->
-  {% if clear_draft %}
-  <script>
-    (function(){ if (window.Draft) { Draft.delete('{{ clear_draft }}'); } })();
-  </script>
-  {% endif %}
-
   <main>
     {% block content %}{% endblock %}
   </main>
@@ -91,6 +84,10 @@
   <script src="{{ url_for('static', filename='vendor/bootstrap/bootstrap.bundle.min.js') }}"></script>
   <script src="{{ url_for('static', filename='js/drafts.js') }}"></script>
   <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+  <!-- Draft auto-clear after successful submit (must load after drafts.js) -->
+  {% if clear_draft %}
+  <script>Draft.delete('{{ clear_draft }}');</script>
+  {% endif %}
   {% block scripts %}{% endblock %}
 </body>
 </html>
