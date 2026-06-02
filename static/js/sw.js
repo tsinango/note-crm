@@ -11,9 +11,10 @@ const STATIC_ASSETS = [
   '/static/css/style.css',
   '/static/js/app.js',
   '/static/manifest.json',
-  'https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css',
-  'https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css',
-  'https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js',
+  '/static/vendor/bootstrap/bootstrap.min.css',
+  '/static/vendor/bootstrap-icons/bootstrap-icons.css',
+  '/static/vendor/bootstrap-icons/fonts/bootstrap-icons.woff2',
+  '/static/vendor/bootstrap/bootstrap.bundle.min.js',
 ];
 
 // Install: pre-cache static assets
