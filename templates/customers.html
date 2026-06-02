@@ -36,7 +36,7 @@
     <div class="col-auto">
       <select class="form-select form-select-sm" name="type" onchange="this.form.submit()">
         <option value="">All types</option>
-        {% for t in all_types %}
+        {% for t in customer_types %}
         <option value="{{ t }}" {% if filter_type == t %}selected{% endif %}>{{ t }}</option>
         {% endfor %}
       </select>
@@ -200,13 +200,9 @@
               <label class="form-label">Type</label>
               <select class="form-select" name="type" id="custType">
                 <option value="">--</option>
-                <option value="Installer">Installer</option>
-                <option value="Distributor">Distributor</option>
-                <option value="Integrator">Integrator</option>
-                <option value="Individual">Individual</option>
-                <option value="Company">Company</option>
-                <option value="Government">Government</option>
-                <option value="Other">Other</option>
+                {% for t in customer_types %}
+                <option value="{{ t }}">{{ t }}</option>
+                {% endfor %}
               </select>
             </div>
             <div class="col-md-3">

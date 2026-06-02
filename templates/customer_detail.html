@@ -219,10 +219,9 @@
               <label class="form-label">Type</label>
               <select class="form-select" name="type" id="custType">
                 <option value="">--</option>
-                <option value="Individual">Individual</option>
-                <option value="Company">Company</option>
-                <option value="Government">Government</option>
-                <option value="Other">Other</option>
+                {% for t in customer_types %}
+                <option value="{{ t }}">{{ t }}</option>
+                {% endfor %}
               </select>
             </div>
             <div class="col-md-3">

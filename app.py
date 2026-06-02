@@ -31,6 +31,16 @@ ALLOWED_EXTENSIONS = {
     "txt", "csv", "zip", "rar", "7z",
 }
 
+CUSTOMER_TYPES = [
+    "Distributor",
+    "Reseller",
+    "Installer",
+    "SI",
+    "Individual",
+    "Team",
+    "Team member",
+]
+
 def allowed_file(filename):
     return "." in filename and filename.rsplit(".", 1)[1].lower() in ALLOWED_EXTENSIONS
 
@@ -233,12 +243,9 @@ def create_app():
                 "overdue_count": reg_overdue,
             })
 
-        # Get all distinct regions and types for filter dropdowns
+        # Get all distinct regions for filter dropdowns
         all_regions = query_all(
             "SELECT DISTINCT region FROM customers WHERE deleted_at IS NULL AND region != '' ORDER BY region"
-        )
-        all_types = query_all(
-            "SELECT DISTINCT type FROM customers WHERE deleted_at IS NULL AND type != '' ORDER BY type"
         )
 
         return render_template(
@@ -251,7 +258,7 @@ def create_app():
             filter_owner=filter_owner,
             filter_pending=filter_pending,
             all_regions=[r["region"] for r in all_regions],
-            all_types=[t["type"] for t in all_types],
+            customer_types=CUSTOMER_TYPES,
         )
 
     @app.route("/customers/new", methods=["POST"])
@@ -272,7 +279,7 @@ def create_app():
                 local_id,
                 name,
                 request.form.get("region", "").strip(),
-                request.form.get("type", "").strip(),
+                _customer_type_from_form(),
                 request.form.get("owner", "").strip(),
                 request.form.get("contacts", "").strip(),
                 request.form.get("phone", "").strip(),
@@ -306,7 +313,7 @@ def create_app():
             (
                 name,
                 region,
-                request.form.get("type", "").strip(),
+                _customer_type_from_form(),
                 request.form.get("owner", "").strip(),
                 request.form.get("contacts", "").strip(),
                 request.form.get("phone", "").strip(),
@@ -461,6 +468,7 @@ def create_app():
             total_meetings=total_meetings,
             now=now,
             today_iso=now.strftime("%Y-%m-%d"),
+            customer_types=CUSTOMER_TYPES,
         )
 
     # ── Load more meetings (AJAX) ───────────────────────────────
@@ -1295,6 +1303,10 @@ def create_app():
         if ref == "tasks":
             return redirect(url_for("tasks"))
         return redirect(url_for("customers"))
+
+    def _customer_type_from_form():
+        customer_type = request.form.get("type", "").strip()
+        return customer_type if customer_type in CUSTOMER_TYPES else ""
 
     return app
 
