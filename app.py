@@ -93,10 +93,12 @@ def create_app():
     # Inject CSRF token and user into all templates
     @app.context_processor
     def inject_globals():
+        clear_draft = session.pop("_clear_draft", None)
         return {
             "csrf_token": generate_csrf_token(),
             "current_user": get_current_user(),
             "page_url": _make_page_url,
+            "clear_draft": clear_draft,
         }
 
     def _make_page_url(page_num):
@@ -312,6 +314,7 @@ def create_app():
                 cid,
             ),
         )
+        _clr(f"crm:draft:customer:edit:c{cid}")
         flash("客户信息已更新", "success")
         return redirect(url_for("customer_detail", cid=cid))
 
@@ -506,6 +509,7 @@ def create_app():
         )
         if request.headers.get("X-Client-Local-Id"):
             return jsonify({"local_id": local_id, "id": mid})
+        _clr(f"crm:draft:meeting:new:c{cid}")
         flash("会议纪要已添加", "success")
         return redirect(url_for("customer_detail", cid=cid))
 
@@ -536,6 +540,7 @@ def create_app():
                 now_utc(), mid,
             ),
         )
+        _clr(f"crm:draft:meeting:edit:m{mid}")
         flash("会议纪要已更新", "success")
         return redirect(url_for("customer_detail", cid=meeting["customer_id"]))
 
@@ -702,6 +707,7 @@ def create_app():
         )
         if request.headers.get("X-Client-Local-Id"):
             return jsonify({"local_id": local_id, "id": tid})
+        _clr(f"crm:draft:task:new:c{cid}_m{mid or '0'}")
         flash("待办事项已添加", "success")
         return redirect_back(cid)
 
@@ -733,6 +739,7 @@ def create_app():
                 tid,
             ),
         )
+        _clr(f"crm:draft:task:edit:t{tid}")
         flash("待办事项已更新", "success")
         return redirect_back(task["customer_id"])
 
@@ -1145,6 +1152,9 @@ def create_app():
         )
 
     # ── Shared redirect helper ──────────────────────────────────
+
+    def _clr(k):
+        session["_clear_draft"] = k
 
     def redirect_back(cid):
         if cid:

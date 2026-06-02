@@ -77,6 +77,13 @@
     {% endif %}
   {% endwith %}
 
+  <!-- Draft auto-clear after successful submit -->
+  {% if clear_draft %}
+  <script>
+    (function(){ if (window.Draft) { Draft.delete('{{ clear_draft }}'); } })();
+  </script>
+  {% endif %}
+
   <main>
     {% block content %}{% endblock %}
   </main>
