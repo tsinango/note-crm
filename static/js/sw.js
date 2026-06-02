@@ -3,11 +3,8 @@
  * Caches core assets for offline use.
  */
 
-const CACHE_NAME = 'crm-cache-v1';
+const CACHE_NAME = 'crm-cache-v2';
 const STATIC_ASSETS = [
-  '/',
-  '/customers',
-  '/tasks',
   '/static/css/style.css',
   '/static/js/app.js',
   '/static/manifest.json',

@@ -48,7 +48,8 @@
   //  PWA SERVICE WORKER
   // ============================================================
   if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('/static/js/sw.js').catch(function (err) {
+    var swVersion = window.CRM_ASSET_VERSION || 'dev';
+    navigator.serviceWorker.register('/static/js/sw.js?v=' + encodeURIComponent(swVersion)).catch(function (err) {
       console.warn('SW registration failed:', err);
     });
   }

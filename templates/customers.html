@@ -320,6 +320,7 @@ function toggleAllRegions() {
 
 // ── Customer form functions (same as before, with region) ──
 function clearCustomerForm() {
+  ensureCustomerTypeOptions();
   document.getElementById('customerForm').action = '{{ url_for("customer_create") }}';
   document.getElementById('customerModalTitle').textContent = 'New customer';
   document.getElementById('custId').value = '';
@@ -333,6 +334,7 @@ function clearCustomerForm() {
 }
 
 function editCustomer(c) {
+  ensureCustomerTypeOptions();
   document.getElementById('customerForm').action = '/customers/' + c.id + '/edit';
   document.getElementById('customerModalTitle').textContent = 'Edit customer';
   document.getElementById('custId').value = c.id || '';
@@ -357,6 +359,28 @@ function setCustomerTypeValue(value) {
   if (value && select.value !== value) {
     select.value = '';
   }
+}
+
+function ensureCustomerTypeOptions() {
+  var select = document.getElementById('custType');
+  var types = window.CRM_CUSTOMER_TYPES || [];
+  if (!select || !types.length) return;
+  var current = select.value;
+  select.innerHTML = '<option value="">--</option>' + types.map(function(type) {
+    return '<option value="' + escapeAttr(type) + '">' + escapeHtml(type) + '</option>';
+  }).join('');
+  select.value = current;
+}
+
+function escapeHtml(value) {
+  return String(value == null ? '' : value)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;');
+}
+
+function escapeAttr(value) {
+  return escapeHtml(value).replace(/"/g, '&quot;');
 }
 
 function updateOfflineBadge() {

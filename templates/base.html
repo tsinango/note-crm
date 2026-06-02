@@ -5,12 +5,12 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#0d6efd">
   <meta name="csrf-token" content="{{ session.get('_csrf_token', '') }}">
-  <link rel="manifest" href="{{ url_for('static', filename='manifest.json') }}">
+  <link rel="manifest" href="{{ url_for('static', filename='manifest.json') }}?v={{ asset_version }}">
   <title>{% block title %}meeting memo and to-do utility{% endblock %}</title>
-  <link href="{{ url_for('static', filename='vendor/bootstrap/bootstrap.min.css') }}" rel="stylesheet">
-  <link id="bootswatch-theme-css" href="{{ url_for('static', filename='vendor/bootswatch/sketchy/bootstrap.min.css') }}" rel="stylesheet">
-  <link href="{{ url_for('static', filename='vendor/bootstrap-icons/bootstrap-icons.css') }}" rel="stylesheet">
-  <link href="{{ url_for('static', filename='css/style.css') }}" rel="stylesheet">
+  <link href="{{ url_for('static', filename='vendor/bootstrap/bootstrap.min.css') }}?v={{ asset_version }}" rel="stylesheet">
+  <link id="bootswatch-theme-css" href="{{ url_for('static', filename='vendor/bootswatch/sketchy/bootstrap.min.css') }}?v={{ asset_version }}" rel="stylesheet">
+  <link href="{{ url_for('static', filename='vendor/bootstrap-icons/bootstrap-icons.css') }}?v={{ asset_version }}" rel="stylesheet">
+  <link href="{{ url_for('static', filename='css/style.css') }}?v={{ asset_version }}" rel="stylesheet">
 </head>
 <body>
   <!-- offline banner -->
@@ -90,8 +90,12 @@
     {% block content %}{% endblock %}
   </main>
 
-  <script src="{{ url_for('static', filename='vendor/bootstrap/bootstrap.bundle.min.js') }}"></script>
-  <script src="{{ url_for('static', filename='js/drafts.js') }}"></script>
+  <script>
+    window.CRM_CUSTOMER_TYPES = {{ customer_types | tojson }};
+    window.CRM_ASSET_VERSION = {{ asset_version | tojson }};
+  </script>
+  <script src="{{ url_for('static', filename='vendor/bootstrap/bootstrap.bundle.min.js') }}?v={{ asset_version }}"></script>
+  <script src="{{ url_for('static', filename='js/drafts.js') }}?v={{ asset_version }}"></script>
   <!-- Draft auto-clear after successful submit (must load after drafts.js) -->
   {% if clear_draft %}
   <script>
@@ -102,8 +106,8 @@
   })();
   </script>
   {% endif %}
-  <script src="{{ url_for('static', filename='js/app.js') }}"></script>
-  <script src="{{ url_for('static', filename='js/theme-switcher.js') }}"></script>
+  <script src="{{ url_for('static', filename='js/app.js') }}?v={{ asset_version }}"></script>
+  <script src="{{ url_for('static', filename='js/theme-switcher.js') }}?v={{ asset_version }}"></script>
   {% block scripts %}{% endblock %}
 </body>
 </html>

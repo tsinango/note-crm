@@ -40,6 +40,7 @@ CUSTOMER_TYPES = [
     "Team",
     "Team member",
 ]
+ASSET_VERSION = "20260602-2"
 
 def allowed_file(filename):
     return "." in filename and filename.rsplit(".", 1)[1].lower() in ALLOWED_EXTENSIONS
@@ -110,6 +111,7 @@ def create_app():
             "page_url": _make_page_url,
             "clear_draft": clear_draft,
             "customer_types": CUSTOMER_TYPES,
+            "asset_version": ASSET_VERSION,
         }
 
     def _make_page_url(page_num):

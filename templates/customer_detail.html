@@ -390,6 +390,7 @@ var MEETING_TASKS = {{ meeting_tasks | tojson }};
 
 // ── Customer Edit ──
 function editCustomer(c) {
+  ensureCustomerTypeOptions();
   var fieldMap = {
     custName: 'name',
     custRegion: 'region',
@@ -417,6 +418,28 @@ function setCustomerTypeValue(value) {
   if (value && select.value !== value) {
     select.value = '';
   }
+}
+
+function ensureCustomerTypeOptions() {
+  var select = document.getElementById('custType');
+  var types = window.CRM_CUSTOMER_TYPES || [];
+  if (!select || !types.length) return;
+  var current = select.value;
+  select.innerHTML = '<option value="">--</option>' + types.map(function(type) {
+    return '<option value="' + escapeAttr(type) + '">' + escapeHtml(type) + '</option>';
+  }).join('');
+  select.value = current;
+}
+
+function escapeHtml(value) {
+  return String(value == null ? '' : value)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;');
+}
+
+function escapeAttr(value) {
+  return escapeHtml(value).replace(/"/g, '&quot;');
 }
 
 function handleCustomerEditSubmit(e) {
