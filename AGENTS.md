@@ -2,7 +2,7 @@
 
 ## Project Structure & Module Organization
 
-This repository contains a lightweight Flask CRM for customer notes, meetings, tasks, uploads, and offline/PWA use.
+This repository contains a lightweight Flask meeting memo and to-do utility for customer records, meeting notes, tasks, uploads, and offline/PWA use.
 
 - `app.py` is the main Flask application and route layer.
 - `auth.py`, `config.py`, and `db.py` hold authentication, configuration, and database helpers.

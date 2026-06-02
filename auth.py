@@ -79,7 +79,7 @@ def login_page():
         ip = request.remote_addr or "127.0.0.1"
 
         if not _check_rate_limit(ip):
-            flash("登录尝试过于频繁，请 5 分钟后再试", "danger")
+            flash("Too many login attempts. Please try again in 5 minutes.", "danger")
             return render_template("login.html")
 
         username = request.form.get("username", "").strip()
@@ -90,10 +90,10 @@ def login_page():
             session["user_id"] = user["id"]
             session["username"] = user["username"]
             session["_csrf_token"] = os.urandom(32).hex()
-            flash("登录成功", "success")
+            flash("Signed in", "success")
             return redirect(url_for("customers"))
 
-        flash("用户名或密码错误", "danger")
+        flash("Invalid username or password", "danger")
 
     return render_template("login.html")
 
@@ -101,7 +101,7 @@ def login_page():
 @auth_bp.route("/logout")
 def logout():
     session.clear()
-    flash("已退出登录", "info")
+    flash("Signed out", "info")
     return redirect(url_for("auth.login_page"))
 
 
@@ -110,7 +110,7 @@ def setup_page():
     """First-time admin creation when no users exist."""
     existing = query_one("SELECT id FROM users LIMIT 1")
     if existing:
-        flash("系统已初始化", "info")
+        flash("System is already initialized", "info")
         return redirect(url_for("auth.login_page"))
 
     if request.method == "POST":
@@ -119,18 +119,18 @@ def setup_page():
         password2 = request.form.get("password2", "")
 
         if not username or len(username) < 2:
-            flash("用户名至少 2 个字符", "danger")
+            flash("Username must be at least 2 characters", "danger")
         elif len(password) < 6:
-            flash("密码至少 6 个字符", "danger")
+            flash("Password must be at least 6 characters", "danger")
         elif password != password2:
-            flash("两次密码不一致", "danger")
+            flash("Passwords do not match", "danger")
         else:
             pw_hash = generate_password_hash(password)
             execute(
                 "INSERT INTO users (username, password_hash) VALUES (?, ?)",
                 (username, pw_hash),
             )
-            flash("管理员账号创建成功，请登录", "success")
+            flash("Admin account created. Please sign in.", "success")
             return redirect(url_for("auth.login_page"))
 
     return render_template("setup.html")

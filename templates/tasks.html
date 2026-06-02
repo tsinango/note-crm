@@ -1,9 +1,9 @@
 {% extends "base.html" %}
-{% block title %}全局待办{% endblock %}
+{% block title %}All to-dos{% endblock %}
 {% block content %}
 <div class="container-fluid py-3">
-  <h4 class="mb-3"><i class="bi bi-check2-square"></i> 全局待办
-    <small class="text-muted fs-6">({{ total }} 条)</small>
+  <h4 class="mb-3"><i class="bi bi-check2-square"></i> All to-dos
+    <small class="text-muted fs-6">({{ total }} items)</small>
   </h4>
 
   <!-- Filters -->
@@ -11,45 +11,45 @@
     <input type="hidden" name="page" value="1">
     <div class="col-auto">
       <select class="form-select form-select-sm" name="status" onchange="this.form.submit()">
-        <option value="pending,in_progress" {% if current_status == 'pending,in_progress' %}selected{% endif %}>⏳ 未完成+进行中</option>
-        <option value="pending" {% if current_status == 'pending' %}selected{% endif %}>未完成</option>
-        <option value="in_progress" {% if current_status == 'in_progress' %}selected{% endif %}>进行中</option>
-        <option value="completed" {% if current_status == 'completed' %}selected{% endif %}>已完成</option>
-        <option value="cancelled" {% if current_status == 'cancelled' %}selected{% endif %}>已取消</option>
-        <option value="all" {% if current_status == 'all' %}selected{% endif %}>全部</option>
+        <option value="pending,in_progress" {% if current_status == 'pending,in_progress' %}selected{% endif %}>Open + in progress</option>
+        <option value="pending" {% if current_status == 'pending' %}selected{% endif %}>Open</option>
+        <option value="in_progress" {% if current_status == 'in_progress' %}selected{% endif %}>In progress</option>
+        <option value="completed" {% if current_status == 'completed' %}selected{% endif %}>Completed</option>
+        <option value="cancelled" {% if current_status == 'cancelled' %}selected{% endif %}>Cancelled</option>
+        <option value="all" {% if current_status == 'all' %}selected{% endif %}>All</option>
       </select>
     </div>
     <div class="col-auto">
       <select class="form-select form-select-sm" name="due" onchange="this.form.submit()">
-        <option value="">📅 所有DDL</option>
-        <option value="overdue" {% if current_due == 'overdue' %}selected{% endif %}>🔴 逾期</option>
-        <option value="today" {% if current_due == 'today' %}selected{% endif %}>🟡 今天到期</option>
-        <option value="week" {% if current_due == 'week' %}selected{% endif %}>🟢 未来7天</option>
-        <option value="nodue" {% if current_due == 'nodue' %}selected{% endif %}>⚪ 无DDL</option>
+        <option value="">All due dates</option>
+        <option value="overdue" {% if current_due == 'overdue' %}selected{% endif %}>Overdue</option>
+        <option value="today" {% if current_due == 'today' %}selected{% endif %}>Due today</option>
+        <option value="week" {% if current_due == 'week' %}selected{% endif %}>Next 7 days</option>
+        <option value="nodue" {% if current_due == 'nodue' %}selected{% endif %}>No due date</option>
       </select>
     </div>
     <div class="col-auto">
       <select class="form-select form-select-sm" name="priority" onchange="this.form.submit()">
-        <option value="">🔖 所有优先级</option>
-        <option value="urgent" {% if current_priority == 'urgent' %}selected{% endif %}>🔴 紧急</option>
-        <option value="important" {% if current_priority == 'important' %}selected{% endif %}>🟡 重要</option>
-        <option value="normal" {% if current_priority == 'normal' %}selected{% endif %}>🟢 普通</option>
+        <option value="">All priorities</option>
+        <option value="urgent" {% if current_priority == 'urgent' %}selected{% endif %}>Urgent</option>
+        <option value="important" {% if current_priority == 'important' %}selected{% endif %}>Important</option>
+        <option value="normal" {% if current_priority == 'normal' %}selected{% endif %}>Normal</option>
       </select>
     </div>
     <div class="col-auto">
       <select class="form-select form-select-sm" name="customer_id" onchange="this.form.submit()">
-        <option value="">🏢 所有客户</option>
+        <option value="">All customers</option>
         {% for c in all_customers %}
         <option value="{{ c.id }}" {% if current_customer_id == c.id|string %}selected{% endif %}>{{ c.name }}</option>
         {% endfor %}
       </select>
     </div>
     <div class="col-auto">
-      <input type="text" class="form-control form-control-sm" name="owner" placeholder="👤 责任人" value="{{ current_owner or '' }}" style="width:120px">
+      <input type="text" class="form-control form-control-sm" name="owner" placeholder="Owner" value="{{ current_owner or '' }}" style="width:120px">
     </div>
     <div class="col-auto">
-      <button type="submit" class="btn btn-outline-secondary btn-sm">筛选</button>
-      <a href="{{ url_for('tasks') }}" class="btn btn-outline-secondary btn-sm">重置</a>
+      <button type="submit" class="btn btn-outline-secondary btn-sm">Filter</button>
+      <a href="{{ url_for('tasks') }}" class="btn btn-outline-secondary btn-sm">Reset</a>
     </div>
   </form>
 
@@ -59,12 +59,12 @@
       <thead class="table-light">
         <tr>
           <th style="width:5%"></th>
-          <th style="width:35%">内容</th>
-          <th>客户</th>
-          <th>负责人</th>
+          <th style="width:35%">Title</th>
+          <th>Customer</th>
+          <th>Owner</th>
           <th>DDL</th>
-          <th>优先级</th>
-          <th>状态</th>
+          <th>Priority</th>
+          <th>Status</th>
         </tr>
       </thead>
       <tbody>
@@ -78,7 +78,7 @@
               <input type="hidden" name="id" value="{{ t.id }}">
               <input type="hidden" name="status" value="completed">
               <input type="hidden" name="return_url" value="{{ request.full_path }}">
-              <button class="btn btn-outline-success btn-sm py-0 px-1" title="完成"><i class="bi bi-check"></i></button>
+              <button class="btn btn-outline-success btn-sm py-0 px-1" title="Complete"><i class="bi bi-check"></i></button>
             </form>
             {% endif %}
           </td>
@@ -100,12 +100,12 @@
           </td>
           <td>
             <span class="badge bg-{{ {'urgent':'danger','important':'warning','normal':'secondary'}.get(t.priority, 'secondary') }}">
-              {{ {'urgent':'紧急','important':'重要','normal':'普通'}.get(t.priority, t.priority) }}
+              {{ {'urgent':'Urgent','important':'Important','normal':'Normal'}.get(t.priority, t.priority) }}
             </span>
           </td>
           <td>
             <span class="badge bg-{{ {'pending':'secondary','in_progress':'info','completed':'success','cancelled':'dark'}.get(t.status) }}">
-              {{ {'pending':'待办','in_progress':'进行','completed':'完成','cancelled':'取消'}.get(t.status) }}
+              {{ {'pending':'Open','in_progress':'In progress','completed':'Completed','cancelled':'Cancelled'}.get(t.status) }}
             </span>
             <div class="btn-group btn-group-sm ms-1">
               {% if t.status == 'pending' %}
@@ -114,7 +114,7 @@
                 <input type="hidden" name="id" value="{{ t.id }}">
                 <input type="hidden" name="status" value="in_progress">
                 <input type="hidden" name="return_url" value="{{ request.full_path }}">
-                <button class="btn btn-outline-info btn-sm py-0 px-1" title="开始"><i class="bi bi-play" style="font-size:0.7rem"></i></button>
+                <button class="btn btn-outline-info btn-sm py-0 px-1" title="Start"><i class="bi bi-play" style="font-size:0.7rem"></i></button>
               </form>
               {% endif %}
               {% if t.status in ('pending','in_progress') %}
@@ -123,7 +123,7 @@
                 <input type="hidden" name="id" value="{{ t.id }}">
                 <input type="hidden" name="status" value="completed">
                 <input type="hidden" name="return_url" value="{{ request.full_path }}">
-                <button class="btn btn-outline-success btn-sm py-0 px-1" title="完成"><i class="bi bi-check" style="font-size:0.7rem"></i></button>
+                <button class="btn btn-outline-success btn-sm py-0 px-1" title="Complete"><i class="bi bi-check" style="font-size:0.7rem"></i></button>
               </form>
               {% endif %}
               <form method="POST" action="{{ url_for('task_quick_status') }}" class="d-inline">
@@ -131,7 +131,7 @@
                 <input type="hidden" name="id" value="{{ t.id }}">
                 <input type="hidden" name="status" value="cancelled">
                 <input type="hidden" name="return_url" value="{{ request.full_path }}">
-                <button class="btn btn-outline-danger btn-sm py-0 px-1" title="取消"><i class="bi bi-x" style="font-size:0.7rem"></i></button>
+                <button class="btn btn-outline-danger btn-sm py-0 px-1" title="Cancel"><i class="bi bi-x" style="font-size:0.7rem"></i></button>
               </form>
             </div>
           </td>
@@ -167,7 +167,7 @@
   {% else %}
   <div class="text-center py-5 text-muted">
     <i class="bi bi-check2-circle display-2 d-block"></i>
-    <p class="mt-3">没有符合条件的待办事项 🎉</p>
+    <p class="mt-3">No to-dos match the current filters.</p>
   </div>
   {% endif %}
 </div>

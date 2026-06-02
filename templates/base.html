@@ -1,12 +1,12 @@
 <!doctype html>
-<html lang="zh-CN">
+<html lang="en">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#0d6efd">
   <meta name="csrf-token" content="{{ session.get('_csrf_token', '') }}">
   <link rel="manifest" href="{{ url_for('static', filename='manifest.json') }}">
-  <title>{% block title %}CRM{% endblock %}</title>
+  <title>{% block title %}meeting memo and to-do utility{% endblock %}</title>
   <link href="{{ url_for('static', filename='vendor/bootstrap/bootstrap.min.css') }}" rel="stylesheet">
   <link id="bootswatch-theme-css" href="{{ url_for('static', filename='vendor/bootswatch/sketchy/bootstrap.min.css') }}" rel="stylesheet">
   <link href="{{ url_for('static', filename='vendor/bootstrap-icons/bootstrap-icons.css') }}" rel="stylesheet">
@@ -15,17 +15,17 @@
 <body>
   <!-- offline banner -->
   <div id="offline-banner" class="alert alert-warning rounded-0 mb-0 text-center d-none" role="alert">
-    <i class="bi bi-wifi-off"></i> <strong>离线模式</strong> — 数据保存在本地，联网后自动同步
+    <i class="bi bi-wifi-off"></i> <strong>Offline mode</strong> - data is saved locally and will sync when online
   </div>
   <div id="sync-banner" class="alert alert-info rounded-0 mb-0 text-center d-none" role="alert">
-    <i class="bi bi-arrow-repeat"></i> <span id="sync-status-text">同步中...</span>
+    <i class="bi bi-arrow-repeat"></i> <span id="sync-status-text">Syncing...</span>
   </div>
 
   {% if session.user_id %}
   <nav class="navbar navbar-expand-lg navbar-dark bg-primary sticky-top">
     <div class="container-fluid">
       <a class="navbar-brand" href="{{ url_for('customers') }}">
-        <i class="bi bi-building"></i> CRM
+        <i class="bi bi-journal-check"></i> meeting memo and to-do utility
       </a>
       <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
         <span class="navbar-toggler-icon"></span>
@@ -34,23 +34,23 @@
         <ul class="navbar-nav me-auto">
           <li class="nav-item">
             <a class="nav-link {% if request.endpoint == 'customers' %}active{% endif %}" href="{{ url_for('customers') }}">
-              <i class="bi bi-people"></i> 客户
+              <i class="bi bi-people"></i> Customers
             </a>
           </li>
           <li class="nav-item">
             <a class="nav-link {% if request.endpoint == 'tasks' %}active{% endif %}" href="{{ url_for('tasks') }}">
-              <i class="bi bi-check2-square"></i> 待办
+              <i class="bi bi-check2-square"></i> To-dos
             </a>
           </li>
         </ul>
         <form class="d-flex me-2" action="{{ url_for('search') }}" method="GET">
-          <input class="form-control form-control-sm me-1" type="search" name="q" placeholder="搜索..." value="{{ request.args.get('q', '') }}">
+          <input class="form-control form-control-sm me-1" type="search" name="q" placeholder="Search..." value="{{ request.args.get('q', '') }}">
           <button class="btn btn-outline-light btn-sm" type="submit"><i class="bi bi-search"></i></button>
         </form>
         <!-- Theme selector -->
         <ul class="navbar-nav me-2">
           <li class="nav-item">
-            <select class="form-select form-select-sm bootswatch-selector" style="width:auto" title="主题">
+            <select class="form-select form-select-sm bootswatch-selector" style="width:auto" title="Theme">
               <option value="default">Default</option>
             </select>
           </li>
@@ -61,9 +61,9 @@
               <i class="bi bi-person-circle"></i> {{ session.username }}
             </a>
             <ul class="dropdown-menu dropdown-menu-end">
-              <li><a class="dropdown-item" href="#" onclick="manualSync()"><i class="bi bi-arrow-repeat"></i> 重新同步</a></li>
+              <li><a class="dropdown-item" href="#" onclick="manualSync()"><i class="bi bi-arrow-repeat"></i> Sync now</a></li>
               <li><hr class="dropdown-divider"></li>
-              <li><a class="dropdown-item" href="{{ url_for('auth.logout') }}"><i class="bi bi-box-arrow-right"></i> 退出</a></li>
+              <li><a class="dropdown-item" href="{{ url_for('auth.logout') }}"><i class="bi bi-box-arrow-right"></i> Sign out</a></li>
             </ul>
           </li>
         </ul>

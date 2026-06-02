@@ -1,6 +1,6 @@
 """
-CRM — Flask application.
-Customer meeting notes & task management.
+meeting memo and to-do utility — Flask application.
+Customer meeting memos and to-do management.
 """
 import os
 import csv
@@ -111,7 +111,7 @@ def create_app():
     @app.before_request
     def csrf_protect():
         if not check_csrf():
-            flash("CSRF 验证失败，请刷新页面后重试", "danger")
+            flash("CSRF validation failed. Refresh the page and try again.", "danger")
             return redirect(request.referrer or url_for("index"))
 
     app.register_blueprint(auth_bp)
@@ -199,19 +199,19 @@ def create_app():
         # Build tree: region → type → customers
         tree = {}
         for r in rows:
-            reg = r["region"] if r["region"] else "未分区"
-            typ = r["type"] if r["type"] else "未分类"
+            reg = r["region"] if r["region"] else "Unassigned"
+            typ = r["type"] if r["type"] else "Uncategorized"
             tree.setdefault(reg, {}).setdefault(typ, []).append(r)
 
         # Build aggregate counts for tree display
         regions_data = []
-        for reg_name in sorted(tree.keys(), key=lambda x: (x == "未分区", x)):
+        for reg_name in sorted(tree.keys(), key=lambda x: (x == "Unassigned", x)):
             types_dict = tree[reg_name]
             types_list = []
             reg_pending = 0
             reg_overdue = 0
             reg_count = 0
-            for typ_name in sorted(types_dict.keys(), key=lambda x: (x == "未分类", x)):
+            for typ_name in sorted(types_dict.keys(), key=lambda x: (x == "Uncategorized", x)):
                 custs = types_dict[typ_name]
                 typ_pending = sum(c["pending_count"] or 0 for c in custs)
                 typ_overdue = sum(c["overdue_count"] or 0 for c in custs)
@@ -259,7 +259,7 @@ def create_app():
     def customer_create():
         name = request.form.get("name", "").strip()
         if not name:
-            flash("客户名称不能为空", "danger")
+            flash("Customer name is required", "danger")
             return redirect(url_for("customers"))
 
         local_id = request.form.get("local_id", "") or new_local_id()
@@ -286,7 +286,7 @@ def create_app():
         # Return the created ID for offline sync
         if request.headers.get("X-Client-Local-Id"):
             return jsonify({"local_id": local_id, "id": cid})
-        flash("客户已添加", "success")
+        flash("Customer added", "success")
         return redirect(url_for("customers"))
 
     @app.route("/customers/<int:cid>/edit", methods=["POST"])
@@ -294,7 +294,7 @@ def create_app():
     def customer_edit(cid):
         name = request.form.get("name", "").strip()
         if not name:
-            flash("客户名称不能为空", "danger")
+            flash("Customer name is required", "danger")
             return redirect(url_for("customer_detail", cid=cid))
 
         region = request.form.get("region", "").strip()
@@ -319,7 +319,7 @@ def create_app():
             ),
         )
         _clr(f"crm:draft:customer:edit:c{cid}")
-        flash("客户信息已更新", "success")
+        flash("Customer updated", "success")
         return redirect(url_for("customer_detail", cid=cid))
 
     @app.route("/customers/<int:cid>/delete", methods=["POST"])
@@ -329,7 +329,7 @@ def create_app():
             "SELECT id FROM customers WHERE id=? AND deleted_at IS NULL", (cid,)
         )
         if not customer:
-            flash("客户不存在", "danger")
+            flash("Customer not found", "danger")
             return redirect(url_for("customers"))
 
         ts = now_utc()
@@ -359,7 +359,7 @@ def create_app():
             (ts, ts, cid),
         )
         db.commit()
-        flash("客户已删除", "info")
+        flash("Customer deleted", "info")
         return redirect(url_for("customers"))
 
     # ═══════════════════════════════════════════════════════════
@@ -375,7 +375,7 @@ def create_app():
             "SELECT * FROM customers WHERE id=? AND deleted_at IS NULL", (cid,)
         )
         if not customer:
-            flash("客户不存在", "danger")
+            flash("Customer not found", "danger")
             return redirect(url_for("customers"))
 
         # 1) All tasks for this customer (one query)
@@ -596,7 +596,7 @@ def create_app():
     def meeting_create(cid):
         meeting_date = request.form.get("meeting_date", "").strip()
         if not meeting_date:
-            flash("会议日期不能为空", "danger")
+            flash("Meeting date is required", "danger")
             return redirect(url_for("customer_detail", cid=cid))
         title = request.form.get("title", "").strip() or ""
 
@@ -621,7 +621,7 @@ def create_app():
         if request.headers.get("X-Client-Local-Id"):
             return jsonify({"local_id": local_id, "id": mid})
         _clr(f"crm:draft:meeting:new:c{cid}")
-        flash("会议纪要已添加", "success")
+        flash("Meeting memo added", "success")
         return redirect(url_for("customer_detail", cid=cid))
 
     @app.route("/meetings/<int:mid>/edit", methods=["POST"])
@@ -631,12 +631,12 @@ def create_app():
             "SELECT * FROM meetings WHERE id=? AND deleted_at IS NULL", (mid,)
         )
         if not meeting:
-            flash("会议不存在", "danger")
+            flash("Meeting memo not found", "danger")
             return redirect(url_for("customers"))
 
         meeting_date = request.form.get("meeting_date", "").strip()
         if not meeting_date:
-            flash("会议日期不能为空", "danger")
+            flash("Meeting date is required", "danger")
             return redirect(url_for("customer_detail", cid=meeting["customer_id"]))
         title = request.form.get("title", "").strip() or meeting.get("title", "")
 
@@ -653,7 +653,7 @@ def create_app():
         )
         _save_meeting_tasks(meeting["customer_id"], mid, meeting.get("customer_local_id", ""))
         _clr(f"crm:draft:meeting:edit:m{mid}")
-        flash("会议纪要已更新", "success")
+        flash("Meeting memo updated", "success")
         return redirect(url_for("customer_detail", cid=meeting["customer_id"]))
 
     @app.route("/meetings/<int:mid>/delete", methods=["POST"])
@@ -684,9 +684,9 @@ def create_app():
                 (ts, ts, mid),
             )
             db.commit()
-            flash("会议纪要已删除", "info")
+            flash("Meeting memo deleted", "info")
             return redirect(url_for("customer_detail", cid=meeting["customer_id"]))
-        flash("会议不存在", "danger")
+        flash("Meeting memo not found", "danger")
         return redirect(url_for("customers"))
 
     # ═══════════════════════════════════════════════════════════
@@ -812,7 +812,7 @@ def create_app():
         mid = request.form.get("meeting_id", "") or None
         title = request.form.get("title", "").strip()
         if not title:
-            flash("待办内容不能为空", "danger")
+            flash("To-do title is required", "danger")
             return redirect_back(cid)
 
         local_id = request.form.get("local_id", "") or new_local_id()
@@ -840,7 +840,7 @@ def create_app():
         if request.headers.get("X-Client-Local-Id"):
             return jsonify({"local_id": local_id, "id": tid})
         _clr(f"crm:draft:task:new:c{cid}_m{mid or '0'}")
-        flash("待办事项已添加", "success")
+        flash("To-do added", "success")
         return redirect_back(cid)
 
     @app.route("/tasks/<int:tid>/edit", methods=["POST"])
@@ -850,7 +850,7 @@ def create_app():
             "SELECT * FROM tasks WHERE id=? AND deleted_at IS NULL", (tid,)
         )
         if not task:
-            flash("待办不存在", "danger")
+            flash("To-do not found", "danger")
             return redirect(url_for("tasks"))
 
         new_status = request.form.get("status", task["status"])
@@ -872,7 +872,7 @@ def create_app():
             ),
         )
         _clr(f"crm:draft:task:edit:t{tid}")
-        flash("待办事项已更新", "success")
+        flash("To-do updated", "success")
         return redirect_back(task["customer_id"])
 
     @app.route("/tasks/<int:tid>/toggle", methods=["POST"])
@@ -882,7 +882,7 @@ def create_app():
             "SELECT * FROM tasks WHERE id=? AND deleted_at IS NULL", (tid,)
         )
         if not task:
-            flash("待办不存在", "danger")
+            flash("To-do not found", "danger")
             return redirect(url_for("tasks"))
 
         new_status = "completed" if task["status"] != "completed" else "pending"
@@ -895,7 +895,7 @@ def create_app():
                 tid,
             ),
         )
-        flash("待办状态已更新", "success")
+        flash("To-do status updated", "success")
         return redirect_back(task["customer_id"])
 
     @app.route("/tasks/<int:tid>/delete", methods=["POST"])
@@ -906,9 +906,9 @@ def create_app():
         )
         if task:
             soft_delete("tasks", tid)
-            flash("待办已删除", "info")
+            flash("To-do deleted", "info")
             return redirect_back(task["customer_id"])
-        flash("待办不存在", "danger")
+        flash("To-do not found", "danger")
         return redirect(url_for("tasks"))
 
     @app.route("/tasks/quick-status", methods=["POST"])
@@ -918,14 +918,14 @@ def create_app():
         new_status = request.form.get("status", "")
         return_url = request.form.get("return_url", url_for("tasks"))
         if not tid or not new_status:
-            flash("参数错误", "danger")
+            flash("Invalid parameters", "danger")
             return redirect(return_url)
 
         task = query_one(
             "SELECT * FROM tasks WHERE id=? AND deleted_at IS NULL", (int(tid),)
         )
         if not task:
-            flash("待办不存在", "danger")
+            flash("To-do not found", "danger")
             return redirect(return_url)
 
         execute(
@@ -937,7 +937,7 @@ def create_app():
                 int(tid),
             ),
         )
-        flash("待办状态已更新", "success")
+        flash("To-do status updated", "success")
         return redirect(return_url)
 
     # ═══════════════════════════════════════════════════════════
@@ -951,12 +951,12 @@ def create_app():
         mid = request.form.get("meeting_id", "")
         file = request.files.get("file")
         if not file or file.filename == "":
-            flash("请选择文件", "danger")
+            flash("Please choose a file", "danger")
             return redirect_back(cid)
 
         filename = file.filename
         if not allowed_file(filename):
-            flash("不支持的文件类型", "danger")
+            flash("Unsupported file type", "danger")
             return redirect_back(cid)
 
         safe_name = secure_filename(filename)
@@ -985,7 +985,7 @@ def create_app():
                 "synced",
             ),
         )
-        flash("附件已上传", "success")
+        flash("Attachment uploaded", "success")
         return redirect_back(cid)
 
     @app.route("/attachments/<int:aid>")
@@ -995,11 +995,11 @@ def create_app():
             "SELECT * FROM attachments WHERE id=? AND deleted_at IS NULL", (aid,)
         )
         if not att:
-            flash("附件不存在", "danger")
+            flash("Attachment not found", "danger")
             return redirect(url_for("customers"))
         fp = os.path.join(UPLOAD_FOLDER, att["file_path"])
         if not os.path.exists(fp):
-            flash("文件不存在", "danger")
+            flash("File not found", "danger")
             return redirect_back(att.get("customer_id") or "")
         return send_file(fp, download_name=att["filename"], mimetype=att["mime_type"])
 
@@ -1011,9 +1011,9 @@ def create_app():
         )
         if att:
             soft_delete("attachments", aid)
-            flash("附件已删除", "info")
+            flash("Attachment deleted", "info")
             return redirect_back(att.get("customer_id") or "")
-        flash("附件不存在", "danger")
+        flash("Attachment not found", "danger")
         return redirect(url_for("customers"))
 
     # ═══════════════════════════════════════════════════════════
@@ -1038,14 +1038,14 @@ def create_app():
     def export_csv():
         entity = request.args.get("type", "customers")
         if entity not in ("customers", "meetings", "tasks"):
-            flash("无效的导出类型", "danger")
+            flash("Invalid export type", "danger")
             return redirect(url_for("customers"))
 
         rows = query_all(
             f"SELECT * FROM {entity} WHERE deleted_at IS NULL ORDER BY id"
         )
         if not rows:
-            flash("没有数据可导出", "info")
+            flash("No data to export", "info")
             return redirect(url_for("customers"))
 
         output = io.StringIO()
@@ -1080,7 +1080,7 @@ def create_app():
         buf.seek(0)
         return send_file(
             buf, mimetype="application/zip",
-            as_attachment=True, download_name="crm_backup.zip"
+            as_attachment=True, download_name="meeting_memo_todo_backup.zip"
         )
 
     # ═══════════════════════════════════════════════════════════

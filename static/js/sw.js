@@ -1,5 +1,5 @@
 /**
- * Service Worker for CRM PWA
+ * Service Worker for meeting memo and to-do utility PWA
  * Caches core assets for offline use.
  */
 

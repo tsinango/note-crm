@@ -1,7 +1,7 @@
 {
-  "name": "CRM - 客户管理系统",
-  "short_name": "CRM",
-  "description": "客户会议纪要和待办事项管理",
+  "name": "meeting memo and to-do utility",
+  "short_name": "meeting memo",
+  "description": "Meeting memo and to-do management utility",
   "start_url": "/customers",
   "display": "standalone",
   "background_color": "#ffffff",

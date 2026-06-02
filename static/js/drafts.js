@@ -6,7 +6,7 @@
  * Usage:
  *   var dk = Draft.key('meeting:new', { customer_id: 1 });
  *   Draft.bindAutosave('meetingForm', dk, ['meetingDate','meetingParticipants','meetingContent']);
- *   Draft.restoreIfExists('meetingForm', dk, '恢复会议草稿?');
+ *   Draft.restoreIfExists('meetingForm', dk, 'Restore meeting draft?');
  */
 (function (w) {
   'use strict';
@@ -73,13 +73,13 @@
     el.className = 'draft-indicator small ms-2';
     if (state === 'saving') {
       el.className += ' text-info';
-      el.innerHTML = '<i class="bi bi-arrow-repeat"></i> ' + (msg || '正在保存...');
+      el.innerHTML = '<i class="bi bi-arrow-repeat"></i> ' + (msg || 'Saving...');
     } else if (state === 'saved') {
       el.className += ' text-success';
-      el.innerHTML = '<i class="bi bi-check-circle"></i> ' + (msg || '已自动保存');
+      el.innerHTML = '<i class="bi bi-check-circle"></i> ' + (msg || 'Autosaved');
     } else if (state === 'error') {
       el.className += ' text-danger';
-      el.innerHTML = '<i class="bi bi-exclamation-triangle"></i> ' + (msg || '保存失败');
+      el.innerHTML = '<i class="bi bi-exclamation-triangle"></i> ' + (msg || 'Save failed');
     } else if (state === 'clear') {
       el.innerHTML = '';
     }
@@ -126,7 +126,7 @@
       var data = collectData();
       var ok = saveDraft(draftKey, data);
       updateIndicator(formId, ok ? 'saved' : 'error',
-                      ok ? null : '自动保存失败，请手动保存');
+                      ok ? null : 'Autosave failed. Save manually.');
     }
 
     // Debounced input listener
@@ -171,14 +171,14 @@
 
     // Offer to restore
     var restored = false;
-    if (w.confirm(promptMsg || '发现未提交的草稿，是否恢复？')) {
+    if (w.confirm(promptMsg || 'An unsaved draft was found. Restore it?')) {
       for (var key in draft) {
         if (key === '_savedAt') continue;
         var el = form.elements[key] || document.getElementById(key);
         if (el) el.value = draft[key];
       }
       restored = true;
-      updateIndicator(formId, 'saved', '已恢复草稿');
+      updateIndicator(formId, 'saved', 'Draft restored');
     } else {
       // Discard
       deleteDraft(draftKey);

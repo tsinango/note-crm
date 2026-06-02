@@ -1,5 +1,5 @@
 /**
- * CRM — Main JavaScript
+ * meeting memo and to-do utility — Main JavaScript
  * PWA registration, network detection, IndexedDB sync (push-first, merge-pull),
  * offline form interception, load-more meetings.
  */
@@ -23,13 +23,13 @@
 
   window.addEventListener('online', function () {
     updateOnlineStatus();
-    showSyncBanner('已联网，正在同步...');
+    showSyncBanner('Online. Syncing...');
     syncAll();
   });
 
   window.addEventListener('offline', function () {
     updateOnlineStatus();
-    showSyncBanner('已离线，数据保存在本地');
+    showSyncBanner('Offline. Data is saved locally.');
   });
 
   window.showSyncBanner = function showSyncBanner(msg) {
@@ -160,19 +160,19 @@
     return _pushPending().then(function () {
       return _pullUpdates();
     }).then(function () {
-      showSyncBanner('同步完成');
+      showSyncBanner('Sync complete');
     }).catch(function (err) {
       console.error('Sync failed:', err);
-      showSyncBanner('同步失败: ' + (err.message || '未知错误'));
+      showSyncBanner('Sync failed: ' + (err.message || 'unknown error'));
     });
   }
 
   window.manualSync = function () {
     if (!navigator.onLine) {
-      showSyncBanner('离线中，无法同步');
+      showSyncBanner('Offline. Sync is unavailable.');
       return;
     }
-    showSyncBanner('正在同步...');
+    showSyncBanner('Syncing...');
     syncAll();
   };
 
@@ -327,7 +327,7 @@
 
     var offset = parseInt(btn.getAttribute('data-offset')) || 0;
     btn.disabled = true;
-    btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> 加载中...';
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Loading...';
 
     var url = '/api/customers/' + customerId + '/meetings?limit=20&offset=' + offset;
     if (!navigator.onLine && window._offlineMeetings) {
@@ -343,7 +343,7 @@
         _renderMoreMeetings(data.meetings || [], offset, btn);
       })
       .catch(function () {
-        btn.innerHTML = '加载失败，点击重试';
+        btn.innerHTML = 'Load failed. Click to retry.';
         btn.disabled = false;
       });
   };
@@ -378,10 +378,10 @@
     btn.setAttribute('data-offset', newOffset);
 
     if (meetings.length < 20) {
-      btn.textContent = '已加载全部';
+      btn.textContent = 'All loaded';
       btn.disabled = true;
     } else {
-      btn.innerHTML = '加载更多...';
+      btn.innerHTML = 'Load more...';
       btn.disabled = false;
     }
   }

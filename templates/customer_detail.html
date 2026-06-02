@@ -5,7 +5,7 @@
 
   <nav aria-label="breadcrumb">
     <ol class="breadcrumb small">
-      <li class="breadcrumb-item"><a href="{{ url_for('customers') }}">客户</a></li>
+      <li class="breadcrumb-item"><a href="{{ url_for('customers') }}">Customers</a></li>
       <li class="breadcrumb-item active">{{ customer.name }}</li>
     </ol>
   </nav>
@@ -31,12 +31,12 @@
         <div class="btn-group btn-group-sm">
           <button class="btn btn-outline-secondary" onclick='editCustomer({{ customer | tojson | safe }})'
                   data-bs-toggle="modal" data-bs-target="#customerModal">
-            <i class="bi bi-pencil"></i> 编辑
+            <i class="bi bi-pencil"></i> Edit
           </button>
           <form method="POST" action="{{ url_for('customer_delete', cid=customer.id) }}" class="d-inline"
-                onsubmit="return confirm('确认删除这个客户？该客户的会议纪要、待办和附件也会一起删除。')">
+                onsubmit="return confirm('Delete this customer? Its meeting memos, to-dos, and attachments will also be deleted.')">
             <input type="hidden" name="_csrf_token" value="{{ session._csrf_token }}">
-            <button class="btn btn-outline-danger"><i class="bi bi-trash"></i> 删除</button>
+            <button class="btn btn-outline-danger"><i class="bi bi-trash"></i> Delete</button>
           </form>
         </div>
       </div>
@@ -46,7 +46,7 @@
   <!-- Task summary -->
   <div class="card mb-3 border-warning shadow-sm" id="tasks">
     <div class="card-header bg-warning bg-opacity-10 d-flex justify-content-between align-items-center">
-      <strong><i class="bi bi-check2-square"></i> 未完成待办</strong>
+      <strong><i class="bi bi-check2-square"></i> Open to-dos</strong>
       <span class="badge bg-warning text-dark">{{ pending_tasks | length }}</span>
     </div>
     <div class="card-body p-2">
@@ -67,20 +67,20 @@
                     </span>
                     {% endif %}
                     <span class="badge bg-{{ {'urgent':'danger','important':'warning','normal':'secondary'}.get(t.priority, 'secondary') }}">
-                      {{ {'urgent':'紧急','important':'重要','normal':'普通'}.get(t.priority, t.priority) }}
+                      {{ {'urgent':'Urgent','important':'Important','normal':'Normal'}.get(t.priority, t.priority) }}
                     </span>
                   </div>
                 </div>
                 <div class="btn-group-vertical btn-group-sm">
                   {% if t.status == 'pending' %}
-                  <button class="btn btn-outline-info btn-sm" title="开始"
+                  <button class="btn btn-outline-info btn-sm" title="Start"
                     onclick="quickStatus({{ t.id }}, 'in_progress')"><i class="bi bi-play"></i></button>
                   {% endif %}
                   {% if t.status in ('pending','in_progress') %}
-                  <button class="btn btn-outline-success btn-sm" title="完成"
+                  <button class="btn btn-outline-success btn-sm" title="Complete"
                     onclick="quickStatus({{ t.id }}, 'completed')"><i class="bi bi-check"></i></button>
                   {% endif %}
-                  <button class="btn btn-outline-danger btn-sm" title="取消"
+                  <button class="btn btn-outline-danger btn-sm" title="Cancel"
                     onclick="quickStatus({{ t.id }}, 'cancelled')"><i class="bi bi-x"></i></button>
                 </div>
               </div>
@@ -90,19 +90,19 @@
         {% endfor %}
       </div>
       {% else %}
-      <p class="text-muted text-center py-2 mb-0">暂无未完成待办</p>
+      <p class="text-muted text-center py-2 mb-0">No open to-dos</p>
       {% endif %}
     </div>
   </div>
 
   <!-- Meeting timeline header -->
   <div class="d-flex justify-content-between align-items-center mb-2">
-    <h6 class="mb-0"><i class="bi bi-journal-text"></i> 会议纪要
-      <small class="text-muted">({{ total_meetings }} 条{% if total_meetings > meetings|length %}, 显示最近 {{ meetings|length }} 条{% endif %})</small>
+    <h6 class="mb-0"><i class="bi bi-journal-text"></i> Meeting memos
+      <small class="text-muted">({{ total_meetings }} total{% if total_meetings > meetings|length %}, showing latest {{ meetings|length }}{% endif %})</small>
     </h6>
     <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#meetingModal"
             onclick="clearMeetingForm()">
-      <i class="bi bi-plus-lg"></i> 新增会议
+      <i class="bi bi-plus-lg"></i> New meeting
     </button>
   </div>
 
@@ -121,10 +121,10 @@
         </button>
         <button class="btn btn-outline-primary btn-sm" onclick='addTaskForMeeting({{ m.id }})'
                 data-bs-toggle="modal" data-bs-target="#taskModal">
-          <i class="bi bi-plus-lg"></i> 待办
+          <i class="bi bi-plus-lg"></i> To-do
         </button>
         <form method="POST" action="{{ url_for('meeting_delete', mid=m.id) }}" class="d-inline"
-              onsubmit="return confirm('确认删除这条会议纪要？关联待办和附件也会一起删除。')">
+              onsubmit="return confirm('Delete this meeting memo? Linked to-dos and attachments will also be deleted.')">
           <input type="hidden" name="_csrf_token" value="{{ session._csrf_token }}">
           <button class="btn btn-outline-danger btn-sm"><i class="bi bi-trash"></i></button>
         </form>
@@ -139,7 +139,7 @@
       {% set mats = attachments | selectattr('meeting_id', 'equalto', m.id) | list %}
       {% if mats %}
       <div class="mt-2 border-top pt-2">
-        <small class="text-muted"><i class="bi bi-paperclip"></i> 附件:</small>
+        <small class="text-muted"><i class="bi bi-paperclip"></i> Attachments:</small>
         {% for att in mats %}
         <a href="{{ url_for('attachment_download', aid=att.id) }}" target="_blank"
            class="badge bg-light text-dark text-decoration-none border ms-1">
@@ -154,17 +154,17 @@
       {% set mtasks = meeting_tasks.get(m.id, []) %}
       {% if mtasks %}
       <div class="mt-2 border-top pt-2">
-        <small class="text-muted"><i class="bi bi-check2-square"></i> 待办 ({{ mtasks|length }}):</small>
+        <small class="text-muted"><i class="bi bi-check2-square"></i> To-dos ({{ mtasks|length }}):</small>
         {% for t in mtasks %}
         <div class="d-flex align-items-center py-1 border-bottom small">
           <span class="badge bg-{{ {'urgent':'danger','important':'warning','normal':'secondary'}.get(t.priority, 'secondary') }} me-2" style="font-size:0.6rem">
-            {{ {'urgent':'急','important':'重','normal':'普'}.get(t.priority, t.priority) }}
+            {{ {'urgent':'U','important':'I','normal':'N'}.get(t.priority, t.priority) }}
           </span>
           <span class="flex-grow-1 {% if t.status == 'completed' %}text-decoration-line-through text-muted{% endif %}">{{ t.title }}</span>
           {% if t.owner %}<small class="text-muted me-2">{{ t.owner }}</small>{% endif %}
           {% if t.due_date %}<small class="me-2">{{ t.due_date }}</small>{% endif %}
           {% if t.status in ('pending',) %}
-          <button class="btn btn-outline-success btn-sm py-0 px-1" title="完成"
+          <button class="btn btn-outline-success btn-sm py-0 px-1" title="Complete"
             onclick="quickStatus({{ t.id }}, 'completed')"><i class="bi bi-check" style="font-size:0.7rem"></i></button>
           {% endif %}
         </div>
@@ -178,7 +178,7 @@
   {% if not meetings %}
   <div class="text-center py-4 text-muted">
     <i class="bi bi-journal-x display-4 d-block"></i>
-    <p>暂无会议纪要</p>
+    <p>No meeting memos yet</p>
   </div>
   {% endif %}
 
@@ -186,7 +186,7 @@
   {% if total_meetings > meetings|length %}
   <div class="text-center py-2" id="loadMoreArea">
     <button class="btn btn-outline-secondary btn-sm" id="loadMoreBtn" onclick="loadMoreMeetings()">
-      加载更多会议 ({{ meetings|length }}/{{ total_meetings }})
+      Load more meetings ({{ meetings|length }}/{{ total_meetings }})
     </button>
   </div>
   {% endif %}
@@ -201,44 +201,44 @@
       <form method="POST" action="{{ url_for('customer_edit', cid=customer.id) }}" id="customerEditForm"
             onsubmit="return handleCustomerEditSubmit(event)">
         <div class="modal-header">
-          <h5 class="modal-title">编辑客户</h5>
+          <h5 class="modal-title">Edit customer</h5>
           <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
         </div>
         <div class="modal-body">
           <input type="hidden" name="_csrf_token" value="{{ session._csrf_token }}">
           <div class="row g-2">
             <div class="col-md-6">
-              <label class="form-label">客户名称 <span class="text-danger">*</span></label>
+              <label class="form-label">Customer name <span class="text-danger">*</span></label>
               <input type="text" class="form-control" name="name" id="custName" required>
             </div>
             <div class="col-md-3">
-              <label class="form-label">区域</label>
-              <input type="text" class="form-control" name="region" id="custRegion" placeholder="例如：华东、华北">
+              <label class="form-label">Region</label>
+              <input type="text" class="form-control" name="region" id="custRegion" placeholder="For example: North, East">
             </div>
             <div class="col-md-3">
-              <label class="form-label">类型</label>
+              <label class="form-label">Type</label>
               <select class="form-select" name="type" id="custType">
                 <option value="">--</option>
-                <option value="个人">个人</option>
-                <option value="企业">企业</option>
-                <option value="政府">政府</option>
-                <option value="其他">其他</option>
+                <option value="Individual">Individual</option>
+                <option value="Company">Company</option>
+                <option value="Government">Government</option>
+                <option value="Other">Other</option>
               </select>
             </div>
             <div class="col-md-3">
-              <label class="form-label">负责人</label>
+              <label class="form-label">Owner</label>
               <input type="text" class="form-control" name="owner" id="custOwner">
             </div>
             <div class="col-md-6">
-              <label class="form-label">联系人</label>
+              <label class="form-label">Contacts</label>
               <input type="text" class="form-control" name="contacts" id="custContacts">
             </div>
             <div class="col-md-3">
-              <label class="form-label">电话</label>
+              <label class="form-label">Phone</label>
               <input type="text" class="form-control" name="phone" id="custPhone">
             </div>
             <div class="col-md-3">
-              <label class="form-label">邮箱</label>
+              <label class="form-label">Email</label>
               <input type="email" class="form-control" name="email" id="custEmail">
             </div>
             <div class="col-md-3">
@@ -246,11 +246,11 @@
               <input type="text" class="form-control" name="telegram" id="custTelegram">
             </div>
             <div class="col-md-9">
-              <label class="form-label">地址</label>
+              <label class="form-label">Address</label>
               <input type="text" class="form-control" name="address" id="custAddress">
             </div>
             <div class="col-12">
-              <label class="form-label">备注</label>
+              <label class="form-label">Notes</label>
               <textarea class="form-control" name="notes" id="custNotes" rows="2"></textarea>
             </div>
           </div>
@@ -258,10 +258,10 @@
         <div class="modal-footer">
           <span id="draft-customerEditForm" class="small me-auto"></span>
           <span id="custEditOfflineBadge" class="text-warning small me-auto d-none">
-            <i class="bi bi-wifi-off"></i> 离线保存
+            <i class="bi bi-wifi-off"></i> Offline save
           </span>
-          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
-          <button type="submit" class="btn btn-primary">保存</button>
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+          <button type="submit" class="btn btn-primary">Save</button>
         </div>
       </form>
     </div>
@@ -275,7 +275,7 @@
       <form method="POST" action="{{ url_for('meeting_create', cid=customer.id) }}" id="meetingForm"
             onsubmit="return handleMeetingSubmit(event)">
         <div class="modal-header">
-          <h5 class="modal-title" id="meetingModalTitle">新增会议纪要</h5>
+          <h5 class="modal-title" id="meetingModalTitle">New meeting memo</h5>
           <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
         </div>
         <div class="modal-body">
@@ -284,22 +284,22 @@
           <input type="hidden" name="local_id" id="meetingLocalId">
           <div class="row g-2">
             <div class="col-md-4">
-              <label class="form-label">日期 <span class="text-danger">*</span></label>
+              <label class="form-label">Date <span class="text-danger">*</span></label>
               <input type="date" class="form-control" name="meeting_date" id="meetingDate" required>
             </div>
             <div class="col-md-8">
-              <label class="form-label">参会人</label>
+              <label class="form-label">Participants</label>
               <input type="text" class="form-control" name="participants" id="meetingParticipants">
             </div>
             <div class="col-12">
-              <label class="form-label">会议内容</label>
+              <label class="form-label">Meeting notes</label>
               <textarea class="form-control" name="content" id="meetingContent" rows="6"></textarea>
             </div>
             <div class="col-12">
               <div class="d-flex justify-content-between align-items-center mt-2 mb-1">
-                <label class="form-label mb-0">会议待办</label>
+                <label class="form-label mb-0">Meeting to-dos</label>
                 <button type="button" class="btn btn-outline-primary btn-sm" onclick="addMeetingTaskRow()">
-                  <i class="bi bi-plus-lg"></i> 添加待办
+                  <i class="bi bi-plus-lg"></i> Add to-do
                 </button>
               </div>
               <div id="meetingTaskRows" class="vstack gap-2"></div>
@@ -309,10 +309,10 @@
         <div class="modal-footer">
           <span id="draft-meetingForm" class="small me-auto"></span>
           <span id="meetingOfflineBadge" class="text-warning small me-auto d-none">
-            <i class="bi bi-wifi-off"></i> 离线保存
+            <i class="bi bi-wifi-off"></i> Offline save
           </span>
-          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
-          <button type="submit" class="btn btn-primary">保存</button>
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+          <button type="submit" class="btn btn-primary">Save</button>
         </div>
       </form>
     </div>
@@ -326,7 +326,7 @@
       <form method="POST" action="{{ url_for('task_create') }}" id="taskForm"
             onsubmit="return handleTaskSubmit(event)">
         <div class="modal-header">
-          <h5 class="modal-title" id="taskModalTitle">新增待办</h5>
+          <h5 class="modal-title" id="taskModalTitle">New to-do</h5>
           <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
         </div>
         <div class="modal-body">
@@ -336,12 +336,12 @@
           <input type="hidden" name="customer_id" value="{{ customer.id }}" id="taskCustomerId">
           <input type="hidden" name="meeting_id" id="taskMeetingId">
           <div class="mb-2">
-            <label class="form-label">内容 <span class="text-danger">*</span></label>
+            <label class="form-label">Title <span class="text-danger">*</span></label>
             <input type="text" class="form-control" name="title" id="taskTitle" required>
           </div>
           <div class="row g-2">
             <div class="col-6">
-              <label class="form-label">责任人</label>
+              <label class="form-label">Owner</label>
               <input type="text" class="form-control" name="owner" id="taskOwner">
             </div>
             <div class="col-6">
@@ -349,24 +349,24 @@
               <input type="date" class="form-control" name="due_date" id="taskDueDate">
             </div>
             <div class="col-6">
-              <label class="form-label">状态</label>
+              <label class="form-label">Status</label>
               <select class="form-select" name="status" id="taskStatus">
-                <option value="pending">未完成</option>
-                <option value="in_progress">进行中</option>
-                <option value="completed">已完成</option>
-                <option value="cancelled">取消</option>
+                <option value="pending">Open</option>
+                <option value="in_progress">In progress</option>
+                <option value="completed">Completed</option>
+                <option value="cancelled">Cancelled</option>
               </select>
             </div>
             <div class="col-6">
-              <label class="form-label">优先级</label>
+              <label class="form-label">Priority</label>
               <select class="form-select" name="priority" id="taskPriority">
-                <option value="normal">普通</option>
-                <option value="important">重要</option>
-                <option value="urgent">紧急</option>
+                <option value="normal">Normal</option>
+                <option value="important">Important</option>
+                <option value="urgent">Urgent</option>
               </select>
             </div>
             <div class="col-12">
-              <label class="form-label">备注</label>
+              <label class="form-label">Notes</label>
               <input type="text" class="form-control" name="note" id="taskNote">
             </div>
           </div>
@@ -374,10 +374,10 @@
         <div class="modal-footer">
           <span id="draft-taskForm" class="small me-auto"></span>
           <span id="taskOfflineBadge" class="text-warning small me-auto d-none">
-            <i class="bi bi-wifi-off"></i> 离线保存
+            <i class="bi bi-wifi-off"></i> Offline save
           </span>
-          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
-          <button type="submit" class="btn btn-primary">保存</button>
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+          <button type="submit" class="btn btn-primary">Save</button>
         </div>
       </form>
     </div>
@@ -430,9 +430,9 @@ function handleCustomerEditSubmit(e) {
       updated_at: new Date().toISOString()
     }).then(function() {
       bootstrap.Modal.getInstance(document.getElementById('customerModal')).hide();
-      showSyncBanner('已离线保存');
+      showSyncBanner('Saved offline');
       setTimeout(function() { location.reload(); }, 500);
-    }).catch(function(err) { alert('离线保存失败: ' + err.message); });
+    }).catch(function(err) { alert('Offline save failed: ' + err.message); });
     return false;
   }
   return true;
@@ -441,7 +441,7 @@ function handleCustomerEditSubmit(e) {
 // ── Meetings ──
 function clearMeetingForm() {
   document.getElementById('meetingForm').action = '{{ url_for("meeting_create", cid=customer.id) }}';
-  document.getElementById('meetingModalTitle').textContent = '新增会议纪要';
+  document.getElementById('meetingModalTitle').textContent = 'New meeting memo';
   document.getElementById('meetingId').value = '';
   document.getElementById('meetingLocalId').value = '';
   document.getElementById('meetingDate').value = new Date().toISOString().slice(0,10);
@@ -454,7 +454,7 @@ function clearMeetingForm() {
 
 function editMeeting(m) {
   document.getElementById('meetingForm').action = '/meetings/' + m.id + '/edit';
-  document.getElementById('meetingModalTitle').textContent = '编辑会议纪要';
+  document.getElementById('meetingModalTitle').textContent = 'Edit meeting memo';
   document.getElementById('meetingId').value = m.id || '';
   document.getElementById('meetingLocalId').value = m.local_id || '';
   document.getElementById('meetingDate').value = m.meeting_date || '';
@@ -482,11 +482,11 @@ function addMeetingTaskRow(task) {
     '<input type="hidden" name="task_delete[]" value="0" class="meeting-task-delete">' +
     '<div class="row g-2 align-items-end">' +
       '<div class="col-md-5">' +
-        '<label class="form-label small mb-1">待办内容</label>' +
-        '<input type="text" class="form-control form-control-sm" name="task_title[]" value="' + escapeAttr(task.title || '') + '" placeholder="例如：发送报价单">' +
+        '<label class="form-label small mb-1">To-do title</label>' +
+        '<input type="text" class="form-control form-control-sm" name="task_title[]" value="' + escapeAttr(task.title || '') + '" placeholder="For example: send quote">' +
       '</div>' +
       '<div class="col-md-2">' +
-        '<label class="form-label small mb-1">责任人</label>' +
+        '<label class="form-label small mb-1">Owner</label>' +
         '<input type="text" class="form-control form-control-sm" name="task_owner[]" value="' + escapeAttr(task.owner || '') + '">' +
       '</div>' +
       '<div class="col-md-2">' +
@@ -494,29 +494,29 @@ function addMeetingTaskRow(task) {
         '<input type="date" class="form-control form-control-sm" name="task_due_date[]" value="' + escapeAttr(task.due_date || '') + '">' +
       '</div>' +
       '<div class="col-md-1">' +
-        '<label class="form-label small mb-1">优先级</label>' +
+        '<label class="form-label small mb-1">Priority</label>' +
         '<select class="form-select form-select-sm" name="task_priority[]">' +
-          optionHtml('normal', '普通', task.priority || 'normal') +
-          optionHtml('important', '重要', task.priority || 'normal') +
-          optionHtml('urgent', '紧急', task.priority || 'normal') +
+          optionHtml('normal', 'Normal', task.priority || 'normal') +
+          optionHtml('important', 'Important', task.priority || 'normal') +
+          optionHtml('urgent', 'Urgent', task.priority || 'normal') +
         '</select>' +
       '</div>' +
       '<div class="col-md-1">' +
-        '<label class="form-label small mb-1">状态</label>' +
+        '<label class="form-label small mb-1">Status</label>' +
         '<select class="form-select form-select-sm" name="task_status[]">' +
-          optionHtml('pending', '未完成', task.status || 'pending') +
-          optionHtml('in_progress', '进行中', task.status || 'pending') +
-          optionHtml('completed', '完成', task.status || 'pending') +
-          optionHtml('cancelled', '取消', task.status || 'pending') +
+          optionHtml('pending', 'Open', task.status || 'pending') +
+          optionHtml('in_progress', 'In progress', task.status || 'pending') +
+          optionHtml('completed', 'Completed', task.status || 'pending') +
+          optionHtml('cancelled', 'Cancelled', task.status || 'pending') +
         '</select>' +
       '</div>' +
       '<div class="col-md-1 text-end">' +
-        '<button type="button" class="btn btn-outline-danger btn-sm" title="删除待办" onclick="removeMeetingTaskRow(this)">' +
+        '<button type="button" class="btn btn-outline-danger btn-sm" title="Delete to-do" onclick="removeMeetingTaskRow(this)">' +
           '<i class="bi bi-trash"></i>' +
         '</button>' +
       '</div>' +
       '<div class="col-12">' +
-        '<input type="text" class="form-control form-control-sm" name="task_note[]" value="' + escapeAttr(task.note || '') + '" placeholder="备注">' +
+        '<input type="text" class="form-control form-control-sm" name="task_note[]" value="' + escapeAttr(task.note || '') + '" placeholder="Notes">' +
       '</div>' +
     '</div>';
   box.appendChild(row);
@@ -564,9 +564,9 @@ function handleMeetingSubmit(e) {
 
     saveLocal('meetings', data).then(function() {
       bootstrap.Modal.getInstance(document.getElementById('meetingModal')).hide();
-      showSyncBanner('已离线保存');
+      showSyncBanner('Saved offline');
       setTimeout(function() { location.reload(); }, 500);
-    }).catch(function(err) { alert('离线保存失败: ' + err.message); });
+    }).catch(function(err) { alert('Offline save failed: ' + err.message); });
     return false;
   }
   return true;
@@ -574,7 +574,7 @@ function handleMeetingSubmit(e) {
 
 // ── Tasks ──
 function clearTaskForm() {
-  document.getElementById('taskModalTitle').textContent = '新增待办';
+  document.getElementById('taskModalTitle').textContent = 'New to-do';
   document.getElementById('taskId').value = '';
   document.getElementById('taskLocalId').value = '';
   document.getElementById('taskTitle').value = '';
@@ -590,12 +590,12 @@ function clearTaskForm() {
 function addTaskForMeeting(meetingId) {
   clearTaskForm();
   document.getElementById('taskMeetingId').value = meetingId;
-  document.getElementById('taskModalTitle').textContent = '添加会议待办';
+  document.getElementById('taskModalTitle').textContent = 'Add meeting to-do';
   updateOfflineBadge('taskOfflineBadge');
 }
 
 function editTask(t) {
-  document.getElementById('taskModalTitle').textContent = '编辑待办';
+  document.getElementById('taskModalTitle').textContent = 'Edit to-do';
   document.getElementById('taskId').value = t.id || '';
   document.getElementById('taskLocalId').value = t.local_id || '';
   document.getElementById('taskTitle').value = t.title || '';
@@ -630,9 +630,9 @@ function handleTaskSubmit(e) {
 
     saveLocal('tasks', data).then(function() {
       bootstrap.Modal.getInstance(document.getElementById('taskModal')).hide();
-      showSyncBanner('已离线保存');
+      showSyncBanner('Saved offline');
       setTimeout(function() { location.reload(); }, 500);
-    }).catch(function(err) { alert('离线保存失败: ' + err.message); });
+    }).catch(function(err) { alert('Offline save failed: ' + err.message); });
     return false;
   }
   return true;
@@ -642,7 +642,7 @@ function handleTaskSubmit(e) {
 function loadMoreMeetings() {
   var btn = document.getElementById('loadMoreBtn');
   btn.disabled = true;
-  btn.textContent = '加载中...';
+    btn.textContent = 'Loading...';
 
   fetch('/api/customers/' + CUSTOMER_ID + '/meetings?limit=20&offset=' + MEETING_OFFSET, {
     credentials: 'same-origin'
@@ -656,12 +656,12 @@ function loadMoreMeetings() {
     if (MEETING_OFFSET >= data.total) {
       document.getElementById('loadMoreArea').remove();
     } else {
-      btn.textContent = '加载更多会议 (' + MEETING_OFFSET + '/' + data.total + ')';
+      btn.textContent = 'Load more meetings (' + MEETING_OFFSET + '/' + data.total + ')';
       btn.disabled = false;
     }
   })
   .catch(function(err) {
-    btn.textContent = '加载失败，点击重试';
+    btn.textContent = 'Load failed. Click to retry.';
     btn.disabled = false;
   });
 }
@@ -744,7 +744,7 @@ function updateOfflineBadge(id) {
       var ok = Draft.save(key, data);
       var indicatorId = 'draft-' + formId;
       Draft.indicator(indicatorId, ok ? 'saved' : 'error',
-                      ok ? null : '保存失败');
+                      ok ? null : 'Save failed');
     }
 
     form.addEventListener('input', function () {
@@ -781,10 +781,10 @@ function updateOfflineBadge(id) {
       var mid = meetingMidEl ? meetingMidEl.value : '';
       if (!mid) {
         var dk = Draft.key('meeting', 'new', { customer_id: cid });
-        Draft.restoreIfExists('meetingForm', dk, '发现未提交的会议草稿，是否恢复？');
+        Draft.restoreIfExists('meetingForm', dk, 'A meeting memo draft was found. Restore it?');
       } else {
         var dk = Draft.key('meeting', 'edit', { meeting_id: mid });
-        Draft.restoreIfExists('meetingForm', dk, '发现未提交的编辑草稿，是否恢复？');
+        Draft.restoreIfExists('meetingForm', dk, 'An edit draft was found. Restore it?');
       }
     });
   }
@@ -812,10 +812,10 @@ function updateOfflineBadge(id) {
       if (!tid) {
         var mid = taskMidEl ? taskMidEl.value : '';
         var dk = Draft.key('task', 'new', { customer_id: cid, meeting_id: mid || undefined });
-        Draft.restoreIfExists('taskForm', dk, '发现未提交的待办草稿，是否恢复？');
+        Draft.restoreIfExists('taskForm', dk, 'A to-do draft was found. Restore it?');
       } else {
         var dk = Draft.key('task', 'edit', { task_id: tid });
-        Draft.restoreIfExists('taskForm', dk, '发现未提交的编辑草稿，是否恢复？');
+        Draft.restoreIfExists('taskForm', dk, 'An edit draft was found. Restore it?');
       }
     });
   }
@@ -833,7 +833,7 @@ function updateOfflineBadge(id) {
       if (custForm._draftSave) custForm._draftSave();
     });
     custModalEl.addEventListener('show.bs.modal', function () {
-      Draft.restoreIfExists('customerEditForm', custDk, '发现未提交的客户编辑草稿，是否恢复？');
+      Draft.restoreIfExists('customerEditForm', custDk, 'A customer edit draft was found. Restore it?');
     });
   }
 
@@ -849,7 +849,7 @@ function updateOfflineBadge(id) {
         <small class="text-muted ms-2 meeting-participants"></small>
       </div>
       <form method="POST" class="meeting-delete-form d-inline"
-            onsubmit="return confirm('确认删除这条会议纪要？关联待办和附件也会一起删除。')">
+            onsubmit="return confirm('Delete this meeting memo? Linked to-dos and attachments will also be deleted.')">
         <input type="hidden" name="_csrf_token" value="{{ session._csrf_token }}">
         <button class="btn btn-outline-danger btn-sm"><i class="bi bi-trash"></i></button>
       </form>

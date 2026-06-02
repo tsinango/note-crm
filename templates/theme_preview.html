@@ -1,34 +1,33 @@
 {% extends "base.html" %}
-{% block title %}主题预览{% endblock %}
+{% block title %}Theme Preview{% endblock %}
 {% block content %}
 <div class="container-fluid py-3">
 
   <div class="d-flex justify-content-between align-items-center mb-3">
-    <h4><i class="bi bi-palette"></i> 主题预览</h4>
+    <h4><i class="bi bi-palette"></i> Theme Preview</h4>
     <div class="d-flex align-items-center gap-2">
-      <label class="form-label mb-0 small">主题：</label>
+      <label class="form-label mb-0 small">Theme:</label>
       <select class="form-select form-select-sm bootswatch-selector" onchange="setTheme(this.value)">
         <option value="default">Default</option>
       </select>
-      <button class="btn btn-outline-secondary btn-sm" onclick="setTheme('default')"><i class="bi bi-arrow-counterclockwise"></i> 恢复默认</button>
+      <button class="btn btn-outline-secondary btn-sm" onclick="setTheme('default')"><i class="bi bi-arrow-counterclockwise"></i> Reset</button>
     </div>
   </div>
 
-  <!-- Customer tree card -->
   <div class="card mb-3">
-    <div class="card-header"><i class="bi bi-globe2"></i> 区域：ЦФО <span class="badge bg-secondary ms-1">30</span> <span class="badge bg-warning text-dark ms-1">12 待办</span> <span class="badge bg-danger ms-1">2 逾期</span></div>
+    <div class="card-header"><i class="bi bi-globe2"></i> Region: Central <span class="badge bg-secondary ms-1">30</span> <span class="badge bg-warning text-dark ms-1">12 open</span> <span class="badge bg-danger ms-1">2 overdue</span></div>
     <div class="card-body p-2">
       <div class="card mb-1">
-        <div class="card-header py-1"><i class="bi bi-tag"></i> 客户类型：安装商 <span class="badge bg-secondary ms-1">15</span> <span class="badge bg-warning text-dark ms-1">8 待办</span></div>
+        <div class="card-header py-1"><i class="bi bi-tag"></i> Customer type: Installer <span class="badge bg-secondary ms-1">15</span> <span class="badge bg-warning text-dark ms-1">8 open</span></div>
         <div class="card-body p-1">
           <div class="list-group list-group-flush">
             <div class="list-group-item py-2 px-3 d-flex justify-content-between align-items-center">
-              <span><a href="#" class="fw-semibold">ООО Ромашка</a> <small class="text-muted"><i class="bi bi-person"></i> Sergey</small></span>
-              <span><span class="badge bg-warning text-dark">3 待办</span> <span class="badge bg-danger">1 逾期</span></span>
+              <span><a href="#" class="fw-semibold">Acme Solar</a> <small class="text-muted"><i class="bi bi-person"></i> Sergey</small></span>
+              <span><span class="badge bg-warning text-dark">3 open</span> <span class="badge bg-danger">1 overdue</span></span>
             </div>
             <div class="list-group-item py-2 px-3 d-flex justify-content-between align-items-center">
-              <span><a href="#" class="fw-semibold">ООО Технопром</a> <small class="text-muted"><i class="bi bi-person"></i> Anna</small></span>
-              <span><span class="badge bg-warning text-dark">2 待办</span></span>
+              <span><a href="#" class="fw-semibold">Northwind Tech</a> <small class="text-muted"><i class="bi bi-person"></i> Anna</small></span>
+              <span><span class="badge bg-warning text-dark">2 open</span></span>
             </div>
           </div>
         </div>
@@ -36,16 +35,15 @@
     </div>
   </div>
 
-  <!-- Task cards row -->
-  <h6 class="mb-2"><i class="bi bi-check2-square"></i> 待办卡片</h6>
+  <h6 class="mb-2"><i class="bi bi-check2-square"></i> To-do Cards</h6>
   <div class="row g-2 mb-3">
     <div class="col-md-4">
       <div class="card border-danger">
         <div class="card-body py-2 px-3">
-          <div class="fw-semibold small">Подготовить КП до пятницы</div>
+          <div class="fw-semibold small">Prepare quote by Friday</div>
           <div class="text-muted" style="font-size:0.75rem">
             <span class="text-danger fw-bold"><i class="bi bi-calendar"></i> 2026-05-30</span>
-            <span class="badge bg-danger ms-1">紧急</span>
+            <span class="badge bg-danger ms-1">Urgent</span>
           </div>
         </div>
       </div>
@@ -53,10 +51,10 @@
     <div class="col-md-4">
       <div class="card border-warning">
         <div class="card-body py-2 px-3">
-          <div class="fw-semibold small">Согласовать бюджет</div>
+          <div class="fw-semibold small">Confirm budget</div>
           <div class="text-muted" style="font-size:0.75rem">
             <span><i class="bi bi-calendar"></i> 2026-06-02</span>
-            <span class="badge bg-warning text-dark ms-1">重要</span>
+            <span class="badge bg-warning text-dark ms-1">Important</span>
           </div>
         </div>
       </div>
@@ -64,38 +62,37 @@
     <div class="col-md-4">
       <div class="card border-success">
         <div class="card-body py-2 px-3">
-          <div class="fw-semibold small text-decoration-line-through text-muted">Отправить документы</div>
+          <div class="fw-semibold small text-decoration-line-through text-muted">Send documents</div>
           <div class="text-muted" style="font-size:0.75rem">
-            <span class="badge bg-success ms-1">完成</span>
+            <span class="badge bg-success ms-1">Completed</span>
           </div>
         </div>
       </div>
     </div>
   </div>
 
-  <!-- Meeting timeline + badges -->
-  <h6 class="mb-2"><i class="bi bi-journal-text"></i> 会议时间线</h6>
+  <h6 class="mb-2"><i class="bi bi-journal-text"></i> Meeting Timeline</h6>
   <div class="card mb-3 shadow-sm">
     <div class="card-header d-flex justify-content-between align-items-center py-2">
       <div><span class="fw-semibold">2026-06-02</span> <small class="text-muted ms-2"><i class="bi bi-people"></i> Ivan, Sergey</small></div>
       <div class="btn-group btn-group-sm">
         <button class="btn btn-outline-secondary btn-sm"><i class="bi bi-pencil"></i></button>
-        <button class="btn btn-outline-primary btn-sm"><i class="bi bi-plus-lg"></i> 待办</button>
+        <button class="btn btn-outline-primary btn-sm"><i class="bi bi-plus-lg"></i> To-do</button>
         <button class="btn btn-outline-danger btn-sm"><i class="bi bi-trash"></i></button>
       </div>
     </div>
     <div class="card-body py-2">
-      <div class="small" style="white-space:pre-wrap">Обсудили технические требования. Договорились о сроках.</div>
+      <div class="small" style="white-space:pre-wrap">Discussed technical requirements and agreed on dates.</div>
       <div class="mt-2 border-top pt-2">
-        <small class="text-muted"><i class="bi bi-paperclip"></i> 附件:</small>
+        <small class="text-muted"><i class="bi bi-paperclip"></i> Attachments:</small>
         <span class="badge bg-light text-dark border ms-1"><i class="bi bi-file-earmark-pdf"></i> spec.pdf</span>
         <span class="badge bg-light text-dark border ms-1"><i class="bi bi-image"></i> photo.png</span>
       </div>
       <div class="mt-2 border-top pt-2">
-        <small class="text-muted"><i class="bi bi-check2-square"></i> 待办 (2):</small>
+        <small class="text-muted"><i class="bi bi-check2-square"></i> To-dos (2):</small>
         <div class="d-flex align-items-center py-1 border-bottom small">
-          <span class="badge bg-danger me-2" style="font-size:0.6rem">急</span>
-          <span class="flex-grow-1">Подготовить КП</span>
+          <span class="badge bg-danger me-2" style="font-size:0.6rem">U</span>
+          <span class="flex-grow-1">Prepare quote</span>
           <small class="text-muted me-2">Ivan</small>
           <button class="btn btn-outline-success btn-sm py-0 px-1"><i class="bi bi-check" style="font-size:0.7rem"></i></button>
         </div>
@@ -103,76 +100,68 @@
     </div>
   </div>
 
-  <!-- Alerts -->
   <h6 class="mb-2"><i class="bi bi-exclamation-triangle"></i> Alerts</h6>
-  <div class="alert alert-success py-2" role="alert">✓ 客户已添加</div>
-  <div class="alert alert-danger py-2" role="alert">✗ 会议日期不能为空</div>
-  <div class="alert alert-warning py-2" role="alert"><i class="bi bi-wifi-off"></i> 离线模式 — 数据保存在本地</div>
-  <div class="alert alert-info py-2" role="alert"><i class="bi bi-arrow-repeat"></i> 同步完成</div>
+  <div class="alert alert-success py-2" role="alert">Customer added</div>
+  <div class="alert alert-danger py-2" role="alert">Meeting date is required</div>
+  <div class="alert alert-warning py-2" role="alert"><i class="bi bi-wifi-off"></i> Offline mode - data is saved locally</div>
+  <div class="alert alert-info py-2" role="alert"><i class="bi bi-arrow-repeat"></i> Sync complete</div>
 
-  <!-- Table -->
-  <h6 class="mb-2"><i class="bi bi-table"></i> 表格</h6>
+  <h6 class="mb-2"><i class="bi bi-table"></i> Table</h6>
   <div class="table-responsive mb-3">
     <table class="table table-hover">
-      <thead class="table-light"><tr><th>客户</th><th>类型</th><th>负责人</th><th>DDL</th><th>状态</th></tr></thead>
+      <thead class="table-light"><tr><th>Customer</th><th>Type</th><th>Owner</th><th>Due</th><th>Status</th></tr></thead>
       <tbody>
-        <tr><td>ООО Ромашка</td><td>企业</td><td>Sergey</td><td class="text-danger fw-bold">2026-05-30</td><td><span class="badge bg-secondary">待办</span></td></tr>
-        <tr><td>ООО Технопром</td><td>企业</td><td>Anna</td><td>2026-06-05</td><td><span class="badge bg-info">进行</span></td></tr>
-        <tr><td>ИП Иванов</td><td>个人</td><td>Ivan</td><td>-</td><td><span class="badge bg-success">完成</span></td></tr>
+        <tr><td>Acme Solar</td><td>Company</td><td>Sergey</td><td class="text-danger fw-bold">2026-05-30</td><td><span class="badge bg-secondary">Open</span></td></tr>
+        <tr><td>Northwind Tech</td><td>Company</td><td>Anna</td><td>2026-06-05</td><td><span class="badge bg-info">In progress</span></td></tr>
+        <tr><td>Ivanov Studio</td><td>Individual</td><td>Ivan</td><td>-</td><td><span class="badge bg-success">Completed</span></td></tr>
       </tbody>
     </table>
   </div>
 
-  <!-- Form inputs -->
-  <h6 class="mb-2"><i class="bi bi-input-cursor-text"></i> 表单控件</h6>
+  <h6 class="mb-2"><i class="bi bi-input-cursor-text"></i> Form Controls</h6>
   <div class="row g-2 mb-3">
-    <div class="col-md-3"><input class="form-control" placeholder="文本输入" value="示例文字"></div>
+    <div class="col-md-3"><input class="form-control" placeholder="Text input" value="Sample text"></div>
     <div class="col-md-3"><input class="form-control" type="date" value="2026-06-02"></div>
-    <div class="col-md-3"><select class="form-select"><option>待办</option><option>进行中</option><option>完成</option></select></div>
-    <div class="col-md-3"><input class="form-control" placeholder="搜索..." type="search"></div>
-    <div class="col-12"><textarea class="form-control" rows="3" placeholder="会议纪要...">Обсудили проект. Договорились.</textarea></div>
+    <div class="col-md-3"><select class="form-select"><option>Open</option><option>In progress</option><option>Completed</option></select></div>
+    <div class="col-md-3"><input class="form-control" placeholder="Search..." type="search"></div>
+    <div class="col-12"><textarea class="form-control" rows="3" placeholder="Meeting memo...">Discussed the project and agreed on next steps.</textarea></div>
   </div>
 
-  <!-- Buttons -->
-  <h6 class="mb-2"><i class="bi bi-hand-index"></i> 按钮</h6>
+  <h6 class="mb-2"><i class="bi bi-hand-index"></i> Buttons</h6>
   <div class="mb-3 d-flex gap-1 flex-wrap">
-    <button class="btn btn-primary btn-sm"><i class="bi bi-plus-lg"></i> 新增</button>
-    <button class="btn btn-outline-secondary btn-sm"><i class="bi bi-pencil"></i> 编辑</button>
-    <button class="btn btn-outline-danger btn-sm"><i class="bi bi-trash"></i> 删除</button>
-    <button class="btn btn-outline-success btn-sm"><i class="bi bi-check"></i> 完成</button>
-    <button class="btn btn-outline-info btn-sm"><i class="bi bi-play"></i> 开始</button>
-    <button class="btn btn-warning btn-sm"><i class="bi bi-wifi-off"></i> 离线</button>
-    <button class="btn btn-secondary btn-sm">取消</button>
-    <button class="btn btn-success btn-sm">保存</button>
+    <button class="btn btn-primary btn-sm"><i class="bi bi-plus-lg"></i> New</button>
+    <button class="btn btn-outline-secondary btn-sm"><i class="bi bi-pencil"></i> Edit</button>
+    <button class="btn btn-outline-danger btn-sm"><i class="bi bi-trash"></i> Delete</button>
+    <button class="btn btn-outline-success btn-sm"><i class="bi bi-check"></i> Complete</button>
+    <button class="btn btn-outline-info btn-sm"><i class="bi bi-play"></i> Start</button>
+    <button class="btn btn-warning btn-sm"><i class="bi bi-wifi-off"></i> Offline</button>
+    <button class="btn btn-secondary btn-sm">Cancel</button>
+    <button class="btn btn-success btn-sm">Save</button>
   </div>
 
-  <!-- Modal trigger -->
   <h6 class="mb-2"><i class="bi bi-window"></i> Modal</h6>
-  <button class="btn btn-primary btn-sm mb-3" data-bs-toggle="modal" data-bs-target="#previewModal">打开 Modal</button>
+  <button class="btn btn-primary btn-sm mb-3" data-bs-toggle="modal" data-bs-target="#previewModal">Open Modal</button>
 
 </div>
 
-<!-- Preview Modal -->
 <div class="modal fade" id="previewModal" tabindex="-1">
   <div class="modal-dialog">
     <div class="modal-content">
-      <div class="modal-header"><h5 class="modal-title">预览 Modal</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
-      <div class="modal-body"><p>主题预览模态窗口。</p><input class="form-control mb-2" placeholder="输入测试"></div>
+      <div class="modal-header"><h5 class="modal-title">Preview Modal</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+      <div class="modal-body"><p>Theme preview modal window.</p><input class="form-control mb-2" placeholder="Test input"></div>
       <div class="modal-footer">
-        <span class="text-muted small me-auto">草稿状态</span>
-        <button class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
-        <button class="btn btn-primary">保存</button>
+        <span class="text-muted small me-auto">Draft status</span>
+        <button class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+        <button class="btn btn-primary">Save</button>
       </div>
     </div>
   </div>
 </div>
 
 <script>
-// Force theme selector init for preview page
 document.addEventListener('DOMContentLoaded', function() {
   var sel = document.querySelector('.bootswatch-selector');
   if (sel) {
-    // Trigger re-init from theme-switcher
     var event = new Event('DOMContentLoaded');
     document.dispatchEvent(event);
   }

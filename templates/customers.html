@@ -1,20 +1,20 @@
 {% extends "base.html" %}
-{% block title %}客户列表{% endblock %}
+{% block title %}Customers{% endblock %}
 {% block content %}
 <div class="container-fluid py-3">
 
   <!-- Header + filters -->
   <div class="d-flex flex-wrap justify-content-between align-items-center mb-2">
-    <h4 class="mb-0"><i class="bi bi-diagram-3"></i> 客户树
-      <small class="text-muted fs-6">({{ total }} 客户)</small>
+    <h4 class="mb-0"><i class="bi bi-diagram-3"></i> Customer Tree
+      <small class="text-muted fs-6">({{ total }} customers)</small>
     </h4>
     <div class="d-flex gap-1">
       <button class="btn btn-outline-secondary btn-sm" onclick="toggleAllRegions()">
-        <i class="bi bi-arrows-expand"></i> 展开/折叠
+        <i class="bi bi-arrows-expand"></i> Expand/Collapse
       </button>
       <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#customerModal"
               onclick="clearCustomerForm()">
-        <i class="bi bi-plus-lg"></i> 新增
+        <i class="bi bi-plus-lg"></i> New
       </button>
     </div>
   </div>
@@ -22,12 +22,12 @@
   <!-- Filter bar -->
   <form method="GET" class="row g-1 mb-2" id="filterForm">
     <div class="col">
-      <input type="text" class="form-control form-control-sm" name="q" placeholder="🔍 搜索客户名/联系人/备注"
+      <input type="text" class="form-control form-control-sm" name="q" placeholder="Search name, contacts, or notes"
              value="{{ search or '' }}">
     </div>
     <div class="col-auto">
       <select class="form-select form-select-sm" name="region" onchange="this.form.submit()">
-        <option value="">所有区域</option>
+        <option value="">All regions</option>
         {% for r in all_regions %}
         <option value="{{ r }}" {% if filter_region == r %}selected{% endif %}>{{ r }}</option>
         {% endfor %}
@@ -35,14 +35,14 @@
     </div>
     <div class="col-auto">
       <select class="form-select form-select-sm" name="type" onchange="this.form.submit()">
-        <option value="">所有类型</option>
+        <option value="">All types</option>
         {% for t in all_types %}
         <option value="{{ t }}" {% if filter_type == t %}selected{% endif %}>{{ t }}</option>
         {% endfor %}
       </select>
     </div>
     <div class="col-auto">
-      <input type="text" class="form-control form-control-sm" name="owner" placeholder="负责人"
+      <input type="text" class="form-control form-control-sm" name="owner" placeholder="Owner"
              value="{{ filter_owner or '' }}" style="width:100px">
     </div>
     <div class="col-auto">
@@ -50,19 +50,19 @@
         <input class="form-check-input" type="checkbox" name="pending_only" value="1"
                id="pendingOnly" {% if filter_pending == '1' %}checked{% endif %}
                onchange="this.form.submit()">
-        <label class="form-check-label small" for="pendingOnly">仅待办</label>
+        <label class="form-check-label small" for="pendingOnly">Open to-dos only</label>
       </div>
     </div>
     <div class="col-auto">
       <button type="submit" class="btn btn-outline-secondary btn-sm"><i class="bi bi-funnel"></i></button>
-      <a href="{{ url_for('customers') }}" class="btn btn-outline-secondary btn-sm">重置</a>
+      <a href="{{ url_for('customers') }}" class="btn btn-outline-secondary btn-sm">Reset</a>
     </div>
   </form>
 
   {% if not regions %}
   <div class="text-center py-5 text-muted">
     <i class="bi bi-inbox display-2 d-block"></i>
-    <p class="mt-3">{% if search %}没有匹配"{{ search }}"的客户{% else %}暂无客户，点击上方按钮新增{% endif %}</p>
+    <p class="mt-3">{% if search %}No customers match "{{ search }}"{% else %}No customers yet. Use New to add one.{% endif %}</p>
   </div>
   {% else %}
 
@@ -83,10 +83,10 @@
           </span>
           <span class="ms-2 badge bg-secondary">{{ region.customer_count }}</span>
           {% if region.pending_count > 0 %}
-          <span class="ms-1 badge bg-warning text-dark">{{ region.pending_count }} 待办</span>
+          <span class="ms-1 badge bg-warning text-dark">{{ region.pending_count }} open</span>
           {% endif %}
           {% if region.overdue_count > 0 %}
-          <span class="ms-1 badge bg-danger">{{ region.overdue_count }} 逾期</span>
+          <span class="ms-1 badge bg-danger">{{ region.overdue_count }} overdue</span>
           {% endif %}
         </button>
       </h2>
@@ -108,10 +108,10 @@
                   <span><i class="bi bi-tag me-1"></i>{{ type.name }}</span>
                   <span class="ms-2 badge bg-secondary">{{ type.customer_count }}</span>
                   {% if type.pending_count > 0 %}
-                  <span class="ms-1 badge bg-warning text-dark">{{ type.pending_count }} 待办</span>
+                  <span class="ms-1 badge bg-warning text-dark">{{ type.pending_count }} open</span>
                   {% endif %}
                   {% if type.overdue_count > 0 %}
-                  <span class="ms-1 badge bg-danger">{{ type.overdue_count }} 逾期</span>
+                  <span class="ms-1 badge bg-danger">{{ type.overdue_count }} overdue</span>
                   {% endif %}
                 </button>
               </h2>
@@ -138,11 +138,11 @@
                         {% if c.pending_count > 0 %}
                         <a href="{{ url_for('customer_detail', cid=c.id) }}#tasks"
                            class="badge bg-warning text-dark text-decoration-none">
-                          {{ c.pending_count }} 待办
+                          {{ c.pending_count }} open
                         </a>
                         {% endif %}
                         {% if c.overdue_count > 0 %}
-                        <span class="badge bg-danger">{{ c.overdue_count }} 逾期</span>
+                        <span class="badge bg-danger">{{ c.overdue_count }} overdue</span>
                         {% endif %}
                         <button class="btn btn-outline-secondary btn-sm ms-1 py-0 px-1"
                                 onclick="editCustomer({{ c | tojson | safe }})"
@@ -150,9 +150,9 @@
                           <i class="bi bi-pencil" style="font-size:0.75rem"></i>
                         </button>
                         <form method="POST" action="{{ url_for('customer_delete', cid=c.id) }}" class="d-inline"
-                              onsubmit="return confirm('确认删除这个客户？该客户的会议纪要、待办和附件也会一起删除。')">
+                              onsubmit="return confirm('Delete this customer? Its meeting memos, to-dos, and attachments will also be deleted.')">
                           <input type="hidden" name="_csrf_token" value="{{ session._csrf_token }}">
-                          <button class="btn btn-outline-danger btn-sm py-0 px-1" title="删除客户">
+                          <button class="btn btn-outline-danger btn-sm py-0 px-1" title="Delete customer">
                             <i class="bi bi-trash" style="font-size:0.75rem"></i>
                           </button>
                         </form>
@@ -180,7 +180,7 @@
       <form method="POST" action="{{ url_for('customer_create') }}" id="customerForm"
             onsubmit="return handleCustomerSubmit(event)">
         <div class="modal-header">
-          <h5 class="modal-title" id="customerModalTitle">新增客户</h5>
+          <h5 class="modal-title" id="customerModalTitle">New customer</h5>
           <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
         </div>
         <div class="modal-body">
@@ -189,40 +189,40 @@
           <input type="hidden" name="local_id" id="custLocalId">
           <div class="row g-2">
             <div class="col-md-6">
-              <label class="form-label">客户名称 <span class="text-danger">*</span></label>
+              <label class="form-label">Customer name <span class="text-danger">*</span></label>
               <input type="text" class="form-control" name="name" id="custName" required>
             </div>
             <div class="col-md-3">
-              <label class="form-label">区域</label>
-              <input type="text" class="form-control" name="region" id="custRegion" placeholder="华东、华北">
+              <label class="form-label">Region</label>
+              <input type="text" class="form-control" name="region" id="custRegion" placeholder="North, East">
             </div>
             <div class="col-md-3">
-              <label class="form-label">类型</label>
+              <label class="form-label">Type</label>
               <select class="form-select" name="type" id="custType">
                 <option value="">--</option>
-                <option value="安装商">安装商</option>
-                <option value="分销商">分销商</option>
-                <option value="集成商">集成商</option>
-                <option value="个人">个人</option>
-                <option value="企业">企业</option>
-                <option value="政府">政府</option>
-                <option value="其他">其他</option>
+                <option value="Installer">Installer</option>
+                <option value="Distributor">Distributor</option>
+                <option value="Integrator">Integrator</option>
+                <option value="Individual">Individual</option>
+                <option value="Company">Company</option>
+                <option value="Government">Government</option>
+                <option value="Other">Other</option>
               </select>
             </div>
             <div class="col-md-3">
-              <label class="form-label">负责人</label>
+              <label class="form-label">Owner</label>
               <input type="text" class="form-control" name="owner" id="custOwner">
             </div>
             <div class="col-md-6">
-              <label class="form-label">联系人</label>
+              <label class="form-label">Contacts</label>
               <input type="text" class="form-control" name="contacts" id="custContacts">
             </div>
             <div class="col-md-3">
-              <label class="form-label">电话</label>
+              <label class="form-label">Phone</label>
               <input type="text" class="form-control" name="phone" id="custPhone">
             </div>
             <div class="col-md-3">
-              <label class="form-label">邮箱</label>
+              <label class="form-label">Email</label>
               <input type="email" class="form-control" name="email" id="custEmail">
             </div>
             <div class="col-md-3">
@@ -230,11 +230,11 @@
               <input type="text" class="form-control" name="telegram" id="custTelegram">
             </div>
             <div class="col-md-9">
-              <label class="form-label">地址</label>
+              <label class="form-label">Address</label>
               <input type="text" class="form-control" name="address" id="custAddress">
             </div>
             <div class="col-12">
-              <label class="form-label">备注</label>
+              <label class="form-label">Notes</label>
               <textarea class="form-control" name="notes" id="custNotes" rows="2"></textarea>
             </div>
           </div>
@@ -242,10 +242,10 @@
         <div class="modal-footer">
           <span id="draft-customerForm" class="small me-auto"></span>
           <span id="customerOfflineBadge" class="text-warning small me-auto d-none">
-            <i class="bi bi-wifi-off"></i> 离线保存
+            <i class="bi bi-wifi-off"></i> Offline save
           </span>
-          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
-          <button type="submit" class="btn btn-primary">保存</button>
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+          <button type="submit" class="btn btn-primary">Save</button>
         </div>
       </form>
     </div>
@@ -324,7 +324,7 @@ function toggleAllRegions() {
 
 // ── Customer form functions (same as before, with region) ──
 function clearCustomerForm() {
-  document.getElementById('customerModalTitle').textContent = '新增客户';
+  document.getElementById('customerModalTitle').textContent = 'New customer';
   document.getElementById('custId').value = '';
   document.getElementById('custLocalId').value = '';
   ['custName','custRegion','custType','custOwner','custContacts','custPhone','custEmail',
@@ -336,7 +336,7 @@ function clearCustomerForm() {
 }
 
 function editCustomer(c) {
-  document.getElementById('customerModalTitle').textContent = '编辑客户';
+  document.getElementById('customerModalTitle').textContent = 'Edit customer';
   document.getElementById('custId').value = c.id || '';
   document.getElementById('custLocalId').value = c.local_id || '';
   document.getElementById('custName').value = c.name || '';
@@ -382,9 +382,9 @@ function handleCustomerSubmit(e) {
     saveLocal('customers', data).then(function() {
       var modal = bootstrap.Modal.getInstance(document.getElementById('customerModal'));
       if (modal) modal.hide();
-      showSyncBanner('已离线保存，联网后自动同步');
+      showSyncBanner('Saved offline. It will sync when online.');
       setTimeout(function() { location.reload(); }, 500);
-    }).catch(function(err) { alert('离线保存失败: ' + err.message); });
+    }).catch(function(err) { alert('Offline save failed: ' + err.message); });
     return false;
   }
   return true;
@@ -416,7 +416,7 @@ function handleCustomerSubmit(e) {
       notes: document.getElementById('custNotes').value,
     };
     var ok = Draft.save(key, data);
-    Draft.indicator('draft-customerForm', ok ? 'saved' : 'error', ok ? null : '保存失败');
+    Draft.indicator('draft-customerForm', ok ? 'saved' : 'error', ok ? null : 'Save failed');
   }
   form.addEventListener('input', function () {
     Draft.indicator('draft-customerForm', 'saving');
@@ -435,7 +435,7 @@ function handleCustomerSubmit(e) {
 document.getElementById('customerModal').addEventListener('show.bs.modal', function () {
   updateOfflineBadge();
   var dk = Draft.key('customer', 'new', {});
-  Draft.restoreIfExists('customerForm', dk, '发现未提交的客户草稿，是否恢复？');
+  Draft.restoreIfExists('customerForm', dk, 'A customer draft was found. Restore it?');
 });
 </script>
 {% endblock %}
