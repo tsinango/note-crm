@@ -8,6 +8,7 @@
   <link rel="manifest" href="{{ url_for('static', filename='manifest.json') }}">
   <title>{% block title %}CRM{% endblock %}</title>
   <link href="{{ url_for('static', filename='vendor/bootstrap/bootstrap.min.css') }}" rel="stylesheet">
+  <link id="bootswatch-theme-css" rel="stylesheet" href="">
   <link href="{{ url_for('static', filename='vendor/bootstrap-icons/bootstrap-icons.css') }}" rel="stylesheet">
   <link href="{{ url_for('static', filename='css/style.css') }}" rel="stylesheet">
 </head>
@@ -46,6 +47,14 @@
           <input class="form-control form-control-sm me-1" type="search" name="q" placeholder="搜索..." value="{{ request.args.get('q', '') }}">
           <button class="btn btn-outline-light btn-sm" type="submit"><i class="bi bi-search"></i></button>
         </form>
+        <!-- Theme selector -->
+        <ul class="navbar-nav me-2">
+          <li class="nav-item">
+            <select class="form-select form-select-sm bootswatch-selector" style="width:auto" title="主题">
+              <option value="default">Default</option>
+            </select>
+          </li>
+        </ul>
         <ul class="navbar-nav">
           <li class="nav-item dropdown">
             <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
@@ -83,6 +92,7 @@
 
   <script src="{{ url_for('static', filename='vendor/bootstrap/bootstrap.bundle.min.js') }}"></script>
   <script src="{{ url_for('static', filename='js/drafts.js') }}"></script>
+  <script src="{{ url_for('static', filename='js/theme-switcher.js') }}"></script>
   <script src="{{ url_for('static', filename='js/app.js') }}"></script>
   <!-- Draft auto-clear after successful submit (must load after drafts.js) -->
   {% if clear_draft %}

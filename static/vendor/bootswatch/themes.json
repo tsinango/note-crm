@@ -1,0 +1,160 @@
+{
+  "themes": [
+    {
+      "name": "brite",
+      "displayName": "Brite",
+      "description": "Neobrutalist form",
+      "preview": "https://bootswatch.com/brite/"
+    },
+    {
+      "name": "cerulean",
+      "displayName": "Cerulean",
+      "description": "A calm blue sky",
+      "preview": "https://bootswatch.com/cerulean/"
+    },
+    {
+      "name": "cosmo",
+      "displayName": "Cosmo",
+      "description": "An ode to Metro",
+      "preview": "https://bootswatch.com/cosmo/"
+    },
+    {
+      "name": "cyborg",
+      "displayName": "Cyborg",
+      "description": "Jet black and electric blue",
+      "preview": "https://bootswatch.com/cyborg/"
+    },
+    {
+      "name": "darkly",
+      "displayName": "Darkly",
+      "description": "Flatly in night mode",
+      "preview": "https://bootswatch.com/darkly/"
+    },
+    {
+      "name": "flatly",
+      "displayName": "Flatly",
+      "description": "Flat and modern",
+      "preview": "https://bootswatch.com/flatly/"
+    },
+    {
+      "name": "journal",
+      "displayName": "Journal",
+      "description": "Crisp like a new sheet of paper",
+      "preview": "https://bootswatch.com/journal/"
+    },
+    {
+      "name": "litera",
+      "displayName": "Litera",
+      "description": "The medium is the message",
+      "preview": "https://bootswatch.com/litera/"
+    },
+    {
+      "name": "lumen",
+      "displayName": "Lumen",
+      "description": "Light and shadow",
+      "preview": "https://bootswatch.com/lumen/"
+    },
+    {
+      "name": "lux",
+      "displayName": "Lux",
+      "description": "A touch of class",
+      "preview": "https://bootswatch.com/lux/"
+    },
+    {
+      "name": "materia",
+      "displayName": "Materia",
+      "description": "Material is the metaphor",
+      "preview": "https://bootswatch.com/materia/"
+    },
+    {
+      "name": "minty",
+      "displayName": "Minty",
+      "description": "A fresh feel",
+      "preview": "https://bootswatch.com/minty/"
+    },
+    {
+      "name": "morph",
+      "displayName": "Morph",
+      "description": "A neumorphic layer",
+      "preview": "https://bootswatch.com/morph/"
+    },
+    {
+      "name": "pulse",
+      "displayName": "Pulse",
+      "description": "A trace of purple",
+      "preview": "https://bootswatch.com/pulse/"
+    },
+    {
+      "name": "quartz",
+      "displayName": "Quartz",
+      "description": "A glassmorphic layer",
+      "preview": "https://bootswatch.com/quartz/"
+    },
+    {
+      "name": "sandstone",
+      "displayName": "Sandstone",
+      "description": "A touch of warmth",
+      "preview": "https://bootswatch.com/sandstone/"
+    },
+    {
+      "name": "simplex",
+      "displayName": "Simplex",
+      "description": "Mini and minimalist",
+      "preview": "https://bootswatch.com/simplex/"
+    },
+    {
+      "name": "sketchy",
+      "displayName": "Sketchy",
+      "description": "A hand-drawn look for mockups and mirth",
+      "preview": "https://bootswatch.com/sketchy/"
+    },
+    {
+      "name": "slate",
+      "displayName": "Slate",
+      "description": "Shades of gunmetal gray",
+      "preview": "https://bootswatch.com/slate/"
+    },
+    {
+      "name": "solar",
+      "displayName": "Solar",
+      "description": "A spin on Solarized",
+      "preview": "https://bootswatch.com/solar/"
+    },
+    {
+      "name": "spacelab",
+      "displayName": "Spacelab",
+      "description": "Silvery and sleek",
+      "preview": "https://bootswatch.com/spacelab/"
+    },
+    {
+      "name": "superhero",
+      "displayName": "Superhero",
+      "description": "The brave and the blue",
+      "preview": "https://bootswatch.com/superhero/"
+    },
+    {
+      "name": "united",
+      "displayName": "United",
+      "description": "Ubuntu orange and unique font",
+      "preview": "https://bootswatch.com/united/"
+    },
+    {
+      "name": "vapor",
+      "displayName": "Vapor",
+      "description": "A cyberpunk aesthetic",
+      "preview": "https://bootswatch.com/vapor/"
+    },
+    {
+      "name": "yeti",
+      "displayName": "Yeti",
+      "description": "A friendly foundation",
+      "preview": "https://bootswatch.com/yeti/"
+    },
+    {
+      "name": "zephyr",
+      "displayName": "Zephyr",
+      "description": "Breezy and beautiful",
+      "preview": "https://bootswatch.com/zephyr/"
+    }
+  ]
+}
