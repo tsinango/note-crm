@@ -14,7 +14,6 @@ CREATE TABLE IF NOT EXISTS customers (
     name TEXT NOT NULL,
     region TEXT DEFAULT '',
     type TEXT DEFAULT '',
-    type TEXT DEFAULT '',
     owner TEXT DEFAULT '',
     contacts TEXT DEFAULT '',
     phone TEXT DEFAULT '',
