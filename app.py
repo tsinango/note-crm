@@ -127,6 +127,10 @@ def create_app():
     #  INDEX
     # ═══════════════════════════════════════════════════════════
 
+    @app.route("/theme-preview")
+    def theme_preview():
+        return render_template("theme_preview.html")
+
     @app.route("/")
     @login_required
     def index():
@@ -423,6 +427,7 @@ def create_app():
             attachments=all_attachments,
             total_meetings=total_meetings,
             now=now,
+            today_iso=now.strftime("%Y-%m-%d"),
         )
 
     # ── Load more meetings (AJAX) ───────────────────────────────
