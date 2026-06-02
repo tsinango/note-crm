@@ -149,6 +149,13 @@
                                 data-bs-toggle="modal" data-bs-target="#customerModal">
                           <i class="bi bi-pencil" style="font-size:0.75rem"></i>
                         </button>
+                        <form method="POST" action="{{ url_for('customer_delete', cid=c.id) }}" class="d-inline"
+                              onsubmit="return confirm('确认删除这个客户？该客户的会议纪要、待办和附件也会一起删除。')">
+                          <input type="hidden" name="_csrf_token" value="{{ session._csrf_token }}">
+                          <button class="btn btn-outline-danger btn-sm py-0 px-1" title="删除客户">
+                            <i class="bi bi-trash" style="font-size:0.75rem"></i>
+                          </button>
+                        </form>
                       </div>
                     </div>
                     {% endfor %}

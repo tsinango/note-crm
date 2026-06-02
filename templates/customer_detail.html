@@ -28,10 +28,17 @@
           <div class="mt-2 small text-muted border-start border-3 ps-2">{{ customer.notes }}</div>
           {% endif %}
         </div>
-        <button class="btn btn-outline-secondary btn-sm" onclick='editCustomer({{ customer | tojson | safe }})'
-                data-bs-toggle="modal" data-bs-target="#customerModal">
-          <i class="bi bi-pencil"></i> 编辑
-        </button>
+        <div class="btn-group btn-group-sm">
+          <button class="btn btn-outline-secondary" onclick='editCustomer({{ customer | tojson | safe }})'
+                  data-bs-toggle="modal" data-bs-target="#customerModal">
+            <i class="bi bi-pencil"></i> 编辑
+          </button>
+          <form method="POST" action="{{ url_for('customer_delete', cid=customer.id) }}" class="d-inline"
+                onsubmit="return confirm('确认删除这个客户？该客户的会议纪要、待办和附件也会一起删除。')">
+            <input type="hidden" name="_csrf_token" value="{{ session._csrf_token }}">
+            <button class="btn btn-outline-danger"><i class="bi bi-trash"></i> 删除</button>
+          </form>
+        </div>
       </div>
     </div>
   </div>
@@ -117,7 +124,7 @@
           <i class="bi bi-plus-lg"></i> 待办
         </button>
         <form method="POST" action="{{ url_for('meeting_delete', mid=m.id) }}" class="d-inline"
-              onsubmit="return confirm('确认删除？')">
+              onsubmit="return confirm('确认删除这条会议纪要？关联待办和附件也会一起删除。')">
           <input type="hidden" name="_csrf_token" value="{{ session._csrf_token }}">
           <button class="btn btn-outline-danger btn-sm"><i class="bi bi-trash"></i></button>
         </form>
@@ -288,6 +295,15 @@
               <label class="form-label">会议内容</label>
               <textarea class="form-control" name="content" id="meetingContent" rows="6"></textarea>
             </div>
+            <div class="col-12">
+              <div class="d-flex justify-content-between align-items-center mt-2 mb-1">
+                <label class="form-label mb-0">会议待办</label>
+                <button type="button" class="btn btn-outline-primary btn-sm" onclick="addMeetingTaskRow()">
+                  <i class="bi bi-plus-lg"></i> 添加待办
+                </button>
+              </div>
+              <div id="meetingTaskRows" class="vstack gap-2"></div>
+            </div>
           </div>
         </div>
         <div class="modal-footer">
@@ -371,6 +387,7 @@
 <script>
 var MEETING_OFFSET = {{ meetings | length }};
 var CUSTOMER_ID = {{ customer.id }};
+var MEETING_TASKS = {{ meeting_tasks | tojson }};
 
 // ── Customer Edit ──
 function editCustomer(c) {
@@ -423,23 +440,110 @@ function handleCustomerEditSubmit(e) {
 
 // ── Meetings ──
 function clearMeetingForm() {
+  document.getElementById('meetingForm').action = '{{ url_for("meeting_create", cid=customer.id) }}';
   document.getElementById('meetingModalTitle').textContent = '新增会议纪要';
   document.getElementById('meetingId').value = '';
   document.getElementById('meetingLocalId').value = '';
   document.getElementById('meetingDate').value = new Date().toISOString().slice(0,10);
   document.getElementById('meetingParticipants').value = '';
   document.getElementById('meetingContent').value = '';
+  resetMeetingTaskRows();
+  addMeetingTaskRow();
   updateOfflineBadge('meetingOfflineBadge');
 }
 
 function editMeeting(m) {
+  document.getElementById('meetingForm').action = '/meetings/' + m.id + '/edit';
   document.getElementById('meetingModalTitle').textContent = '编辑会议纪要';
   document.getElementById('meetingId').value = m.id || '';
   document.getElementById('meetingLocalId').value = m.local_id || '';
   document.getElementById('meetingDate').value = m.meeting_date || '';
   document.getElementById('meetingParticipants').value = m.participants || '';
   document.getElementById('meetingContent').value = m.content || '';
+  resetMeetingTaskRows();
+  (MEETING_TASKS[String(m.id)] || []).forEach(function(t) { addMeetingTaskRow(t); });
   updateOfflineBadge('meetingOfflineBadge');
+}
+
+function resetMeetingTaskRows() {
+  var box = document.getElementById('meetingTaskRows');
+  if (box) box.innerHTML = '';
+}
+
+function addMeetingTaskRow(task) {
+  task = task || {};
+  var box = document.getElementById('meetingTaskRows');
+  if (!box) return;
+
+  var row = document.createElement('div');
+  row.className = 'border rounded p-2 meeting-task-row';
+  row.innerHTML =
+    '<input type="hidden" name="task_id[]" value="' + escapeAttr(task.id || '') + '">' +
+    '<input type="hidden" name="task_delete[]" value="0" class="meeting-task-delete">' +
+    '<div class="row g-2 align-items-end">' +
+      '<div class="col-md-5">' +
+        '<label class="form-label small mb-1">待办内容</label>' +
+        '<input type="text" class="form-control form-control-sm" name="task_title[]" value="' + escapeAttr(task.title || '') + '" placeholder="例如：发送报价单">' +
+      '</div>' +
+      '<div class="col-md-2">' +
+        '<label class="form-label small mb-1">责任人</label>' +
+        '<input type="text" class="form-control form-control-sm" name="task_owner[]" value="' + escapeAttr(task.owner || '') + '">' +
+      '</div>' +
+      '<div class="col-md-2">' +
+        '<label class="form-label small mb-1">DDL</label>' +
+        '<input type="date" class="form-control form-control-sm" name="task_due_date[]" value="' + escapeAttr(task.due_date || '') + '">' +
+      '</div>' +
+      '<div class="col-md-1">' +
+        '<label class="form-label small mb-1">优先级</label>' +
+        '<select class="form-select form-select-sm" name="task_priority[]">' +
+          optionHtml('normal', '普通', task.priority || 'normal') +
+          optionHtml('important', '重要', task.priority || 'normal') +
+          optionHtml('urgent', '紧急', task.priority || 'normal') +
+        '</select>' +
+      '</div>' +
+      '<div class="col-md-1">' +
+        '<label class="form-label small mb-1">状态</label>' +
+        '<select class="form-select form-select-sm" name="task_status[]">' +
+          optionHtml('pending', '未完成', task.status || 'pending') +
+          optionHtml('in_progress', '进行中', task.status || 'pending') +
+          optionHtml('completed', '完成', task.status || 'pending') +
+          optionHtml('cancelled', '取消', task.status || 'pending') +
+        '</select>' +
+      '</div>' +
+      '<div class="col-md-1 text-end">' +
+        '<button type="button" class="btn btn-outline-danger btn-sm" title="删除待办" onclick="removeMeetingTaskRow(this)">' +
+          '<i class="bi bi-trash"></i>' +
+        '</button>' +
+      '</div>' +
+      '<div class="col-12">' +
+        '<input type="text" class="form-control form-control-sm" name="task_note[]" value="' + escapeAttr(task.note || '') + '" placeholder="备注">' +
+      '</div>' +
+    '</div>';
+  box.appendChild(row);
+}
+
+function removeMeetingTaskRow(btn) {
+  var row = btn.closest('.meeting-task-row');
+  if (!row) return;
+  var idInput = row.querySelector('input[name="task_id[]"]');
+  if (idInput && idInput.value) {
+    row.querySelector('.meeting-task-delete').value = '1';
+    row.classList.add('d-none');
+  } else {
+    row.remove();
+  }
+}
+
+function optionHtml(value, label, selected) {
+  return '<option value="' + value + '"' + (value === selected ? ' selected' : '') + '>' + label + '</option>';
+}
+
+function escapeAttr(value) {
+  return String(value == null ? '' : value)
+    .replace(/&/g, '&amp;')
+    .replace(/"/g, '&quot;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;');
 }
 
 function handleMeetingSubmit(e) {
@@ -570,6 +674,8 @@ function appendMeetingCard(m, allTasks, allAtts) {
   clone.querySelector('.meeting-date').textContent = m.meeting_date;
   if (m.participants) clone.querySelector('.meeting-participants').textContent = m.participants;
   if (m.content) clone.querySelector('.meeting-content').textContent = m.content;
+  var deleteForm = clone.querySelector('.meeting-delete-form');
+  if (deleteForm) deleteForm.action = '/meetings/' + m.id + '/delete';
 
   // Insert before load-more area
   var loadArea = document.getElementById('loadMoreArea');
@@ -737,9 +843,16 @@ function updateOfflineBadge(id) {
 <!-- Hidden template for loaded meetings -->
 <template id="meetingTemplate">
   <div class="card mb-3 shadow-sm">
-    <div class="card-header py-2">
-      <span class="fw-semibold meeting-date"></span>
-      <small class="text-muted ms-2 meeting-participants"></small>
+    <div class="card-header d-flex flex-wrap justify-content-between align-items-center py-2">
+      <div>
+        <span class="fw-semibold meeting-date"></span>
+        <small class="text-muted ms-2 meeting-participants"></small>
+      </div>
+      <form method="POST" class="meeting-delete-form d-inline"
+            onsubmit="return confirm('确认删除这条会议纪要？关联待办和附件也会一起删除。')">
+        <input type="hidden" name="_csrf_token" value="{{ session._csrf_token }}">
+        <button class="btn btn-outline-danger btn-sm"><i class="bi bi-trash"></i></button>
+      </form>
     </div>
     <div class="card-body py-2">
       <div class="small meeting-content" style="white-space:pre-wrap"></div>

@@ -325,7 +325,40 @@ def create_app():
     @app.route("/customers/<int:cid>/delete", methods=["POST"])
     @login_required
     def customer_delete(cid):
-        soft_delete("customers", cid)
+        customer = query_one(
+            "SELECT id FROM customers WHERE id=? AND deleted_at IS NULL", (cid,)
+        )
+        if not customer:
+            flash("客户不存在", "danger")
+            return redirect(url_for("customers"))
+
+        ts = now_utc()
+        db = get_db()
+        db.execute(
+            """UPDATE attachments
+               SET deleted_at=?, updated_at=?, sync_status='pending_update'
+               WHERE customer_id=? AND deleted_at IS NULL""",
+            (ts, ts, cid),
+        )
+        db.execute(
+            """UPDATE tasks
+               SET deleted_at=?, updated_at=?, sync_status='pending_update'
+               WHERE customer_id=? AND deleted_at IS NULL""",
+            (ts, ts, cid),
+        )
+        db.execute(
+            """UPDATE meetings
+               SET deleted_at=?, updated_at=?, sync_status='pending_update'
+               WHERE customer_id=? AND deleted_at IS NULL""",
+            (ts, ts, cid),
+        )
+        db.execute(
+            """UPDATE customers
+               SET deleted_at=?, updated_at=?, sync_status='pending_update'
+               WHERE id=? AND deleted_at IS NULL""",
+            (ts, ts, cid),
+        )
+        db.commit()
         flash("客户已删除", "info")
         return redirect(url_for("customers"))
 
@@ -486,6 +519,78 @@ def create_app():
     #  MEETINGS
     # ═══════════════════════════════════════════════════════════
 
+    def _meeting_task_rows():
+        ids = request.form.getlist("task_id[]")
+        deletes = request.form.getlist("task_delete[]")
+        titles = request.form.getlist("task_title[]")
+        owners = request.form.getlist("task_owner[]")
+        due_dates = request.form.getlist("task_due_date[]")
+        priorities = request.form.getlist("task_priority[]")
+        statuses = request.form.getlist("task_status[]")
+        notes = request.form.getlist("task_note[]")
+
+        rows = []
+        for i, title in enumerate(titles):
+            rows.append({
+                "id": ids[i].strip() if i < len(ids) else "",
+                "delete": deletes[i] == "1" if i < len(deletes) else False,
+                "title": title.strip(),
+                "owner": owners[i].strip() if i < len(owners) else "",
+                "due_date": due_dates[i].strip() if i < len(due_dates) else "",
+                "priority": priorities[i] if i < len(priorities) else "normal",
+                "status": statuses[i] if i < len(statuses) else "pending",
+                "note": notes[i].strip() if i < len(notes) else "",
+            })
+        return rows
+
+    def _save_meeting_tasks(cid, mid, customer_local_id=""):
+        for row in _meeting_task_rows():
+            tid = int(row["id"]) if row["id"].isdigit() else None
+            if row["delete"]:
+                if tid:
+                    execute(
+                        """UPDATE tasks
+                           SET deleted_at=?, updated_at=?,
+                               sync_status='pending_update'
+                           WHERE id=? AND customer_id=? AND meeting_id=?
+                             AND deleted_at IS NULL""",
+                        (now_utc(), now_utc(), tid, cid, mid),
+                    )
+                continue
+            if not row["title"]:
+                continue
+
+            completed_at = now_utc() if row["status"] == "completed" else None
+            if tid:
+                execute(
+                    """UPDATE tasks
+                       SET title=?, owner=?, due_date=?, status=?, priority=?,
+                           note=?, updated_at=?, completed_at=?,
+                           sync_status='pending_update'
+                       WHERE id=? AND customer_id=? AND meeting_id=?
+                         AND deleted_at IS NULL""",
+                    (
+                        row["title"], row["owner"], row["due_date"] or None,
+                        row["status"], row["priority"], row["note"], now_utc(),
+                        completed_at, tid, cid, mid,
+                    ),
+                )
+            else:
+                execute(
+                    """INSERT INTO tasks
+                       (local_id, customer_id, customer_local_id,
+                        meeting_id, meeting_local_id,
+                        title, owner, due_date, status, priority, note,
+                        completed_at, sync_status)
+                       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+                    (
+                        new_local_id(), cid, customer_local_id, mid, "",
+                        row["title"], row["owner"], row["due_date"] or None,
+                        row["status"], row["priority"], row["note"],
+                        completed_at, "synced",
+                    ),
+                )
+
     @app.route("/customers/<int:cid>/meetings/new", methods=["POST"])
     @login_required
     def meeting_create(cid):
@@ -512,6 +617,7 @@ def create_app():
                 "synced",
             ),
         )
+        _save_meeting_tasks(cid, mid, request.form.get("customer_local_id", ""))
         if request.headers.get("X-Client-Local-Id"):
             return jsonify({"local_id": local_id, "id": mid})
         _clr(f"crm:draft:meeting:new:c{cid}")
@@ -545,6 +651,7 @@ def create_app():
                 now_utc(), mid,
             ),
         )
+        _save_meeting_tasks(meeting["customer_id"], mid, meeting.get("customer_local_id", ""))
         _clr(f"crm:draft:meeting:edit:m{mid}")
         flash("会议纪要已更新", "success")
         return redirect(url_for("customer_detail", cid=meeting["customer_id"]))
@@ -556,7 +663,27 @@ def create_app():
             "SELECT * FROM meetings WHERE id=? AND deleted_at IS NULL", (mid,)
         )
         if meeting:
-            soft_delete("meetings", mid)
+            ts = now_utc()
+            db = get_db()
+            db.execute(
+                """UPDATE attachments
+                   SET deleted_at=?, updated_at=?, sync_status='pending_update'
+                   WHERE meeting_id=? AND deleted_at IS NULL""",
+                (ts, ts, mid),
+            )
+            db.execute(
+                """UPDATE tasks
+                   SET deleted_at=?, updated_at=?, sync_status='pending_update'
+                   WHERE meeting_id=? AND deleted_at IS NULL""",
+                (ts, ts, mid),
+            )
+            db.execute(
+                """UPDATE meetings
+                   SET deleted_at=?, updated_at=?, sync_status='pending_update'
+                   WHERE id=? AND deleted_at IS NULL""",
+                (ts, ts, mid),
+            )
+            db.commit()
             flash("会议纪要已删除", "info")
             return redirect(url_for("customer_detail", cid=meeting["customer_id"]))
         flash("会议不存在", "danger")
