@@ -320,6 +320,7 @@ function toggleAllRegions() {
 
 // ── Customer form functions (same as before, with region) ──
 function clearCustomerForm() {
+  document.getElementById('customerForm').action = '{{ url_for("customer_create") }}';
   document.getElementById('customerModalTitle').textContent = 'New customer';
   document.getElementById('custId').value = '';
   document.getElementById('custLocalId').value = '';
@@ -332,12 +333,13 @@ function clearCustomerForm() {
 }
 
 function editCustomer(c) {
+  document.getElementById('customerForm').action = '/customers/' + c.id + '/edit';
   document.getElementById('customerModalTitle').textContent = 'Edit customer';
   document.getElementById('custId').value = c.id || '';
   document.getElementById('custLocalId').value = c.local_id || '';
   document.getElementById('custName').value = c.name || '';
   document.getElementById('custRegion').value = c.region || '';
-  document.getElementById('custType').value = c.type || '';
+  setCustomerTypeValue(c.type || '');
   document.getElementById('custOwner').value = c.owner || '';
   document.getElementById('custContacts').value = c.contacts || '';
   document.getElementById('custPhone').value = c.phone || '';
@@ -346,6 +348,15 @@ function editCustomer(c) {
   document.getElementById('custAddress').value = c.address || '';
   document.getElementById('custNotes').value = c.notes || '';
   updateOfflineBadge();
+}
+
+function setCustomerTypeValue(value) {
+  var select = document.getElementById('custType');
+  if (!select) return;
+  select.value = value;
+  if (value && select.value !== value) {
+    select.value = '';
+  }
 }
 
 function updateOfflineBadge() {

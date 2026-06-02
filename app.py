@@ -109,6 +109,7 @@ def create_app():
             "current_user": get_current_user(),
             "page_url": _make_page_url,
             "clear_draft": clear_draft,
+            "customer_types": CUSTOMER_TYPES,
         }
 
     def _make_page_url(page_num):

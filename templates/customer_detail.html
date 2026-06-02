@@ -406,7 +406,17 @@ function editCustomer(c) {
     var el = document.getElementById(elId);
     if (el) el.value = c[fieldMap[elId]] || '';
   }
+  setCustomerTypeValue(c.type || '');
   updateOfflineBadge('custEditOfflineBadge');
+}
+
+function setCustomerTypeValue(value) {
+  var select = document.getElementById('custType');
+  if (!select) return;
+  select.value = value;
+  if (value && select.value !== value) {
+    select.value = '';
+  }
 }
 
 function handleCustomerEditSubmit(e) {
