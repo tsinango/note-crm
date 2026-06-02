@@ -676,6 +676,9 @@ function updateOfflineBadge(id) {
       if (!mid) {
         var dk = Draft.key('meeting', 'new', { customer_id: cid });
         Draft.restoreIfExists('meetingForm', dk, '发现未提交的会议草稿，是否恢复？');
+      } else {
+        var dk = Draft.key('meeting', 'edit', { meeting_id: mid });
+        Draft.restoreIfExists('meetingForm', dk, '发现未提交的编辑草稿，是否恢复？');
       }
     });
   }
@@ -704,6 +707,9 @@ function updateOfflineBadge(id) {
         var mid = taskMidEl ? taskMidEl.value : '';
         var dk = Draft.key('task', 'new', { customer_id: cid, meeting_id: mid || undefined });
         Draft.restoreIfExists('taskForm', dk, '发现未提交的待办草稿，是否恢复？');
+      } else {
+        var dk = Draft.key('task', 'edit', { task_id: tid });
+        Draft.restoreIfExists('taskForm', dk, '发现未提交的编辑草稿，是否恢复？');
       }
     });
   }
